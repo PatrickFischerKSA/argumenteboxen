@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Argumenteboxen</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Argumentespiel fuer zwei Computer</p>
+          <h1>Argumenteboxen</h1>
+          <p class="hero-copy">
+            Zwei Kängurus boxen sich mit Pro- und Contra-Argumenten durch die
+            Frage: Soll Sport ein Promotionsfach werden?
+          </p>
+        </div>
+        <div class="hero-badge">
+          <span>3 Volltreffer = KO</span>
+          <strong>Pro vs. Contra</strong>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel setup-panel" id="setup-panel">
+          <div class="panel-heading">
+            <h2>Raum starten</h2>
+            <p>Ein Gerät eröffnet den Raum, das zweite tritt mit Code bei.</p>
+          </div>
+
+          <label class="field">
+            <span>Dein Name</span>
+            <input id="name-input" maxlength="24" placeholder="z. B. Team Rot" />
+          </label>
+
+          <div class="setup-actions">
+            <button id="create-room-btn" class="primary-btn">Neuen Raum erstellen</button>
+          </div>
+
+          <div class="join-box">
+            <label class="field">
+              <span>Raumcode</span>
+              <input id="room-code-input" maxlength="5" placeholder="ABCDE" />
+            </label>
+            <button id="join-room-btn" class="secondary-btn">Raum beitreten</button>
+          </div>
+
+          <div class="notice" id="notice">
+            <strong>Hinweis:</strong> Beide Spieler*innen spielen im Browser auf
+            demselben Server, aber auf zwei verschiedenen Computern.
+          </div>
+        </section>
+
+        <section class="panel battle-panel" id="battle-panel">
+          <div class="battle-topbar">
+            <div>
+              <p class="eyebrow">Raumcode</p>
+              <div class="room-code" id="room-code-display">-----</div>
+            </div>
+            <div class="status-copy">
+              <p class="status-line" id="status-line">Warte auf die Arena.</p>
+              <p class="prompt-line" id="prompt-line"></p>
+            </div>
+            <div class="topbar-actions">
+              <button id="audio-toggle-btn" class="secondary-btn">Sound aus</button>
+              <button id="start-match-btn" class="primary-btn hidden">Match starten</button>
+            </div>
+          </div>
+
+          <div class="arena" id="arena">
+            <div class="arena-lights"></div>
+            <div class="arena-impact" id="arena-impact"></div>
+            <div class="arena-announcer" id="arena-announcer">Arena bereit</div>
+
+            <div class="fighter pro" id="fighter-pro">
+              <div class="fighter-banner">
+                <span class="side-tag">PRO</span>
+                <strong id="fighter-pro-name">Känguru Rot</strong>
+              </div>
+              <div class="speech-bubble" id="bubble-pro"></div>
+              <div class="roo-art">
+                <svg viewBox="0 0 260 310" aria-hidden="true">
+                  <ellipse class="shadow" cx="130" cy="286" rx="76" ry="18" />
+                  <path
+                    class="tail"
+                    d="M70 220 C28 206, 16 162, 50 148 C94 130, 122 184, 108 226"
+                  />
+                  <g class="back-leg">
+                    <ellipse class="leg" cx="92" cy="242" rx="20" ry="56" />
+                    <ellipse class="foot" cx="84" cy="288" rx="34" ry="12" />
+                  </g>
+                  <g class="body">
+                    <ellipse class="torso" cx="130" cy="162" rx="64" ry="82" />
+                    <ellipse class="belly" cx="134" cy="177" rx="36" ry="54" />
+                    <path class="shorts" d="M82 182 L178 182 L168 230 L94 230 Z" />
+                    <path class="waistband" d="M86 178 L174 178 L170 194 L90 194 Z" />
+                  </g>
+                  <g class="front-leg">
+                    <ellipse class="leg" cx="158" cy="245" rx="20" ry="58" />
+                    <ellipse class="foot" cx="171" cy="288" rx="34" ry="12" />
+                  </g>
+                  <g class="head">
+                    <path class="ear ear-back" d="M122 42 C128 10, 152 10, 158 46 Z" />
+                    <path class="ear ear-front" d="M156 44 C162 10, 190 14, 194 54 Z" />
+                    <ellipse class="helmet" cx="151" cy="78" rx="58" ry="38" />
+                    <ellipse class="face" cx="150" cy="94" rx="52" ry="48" />
+                    <ellipse class="muzzle" cx="170" cy="108" rx="30" ry="18" />
+                    <ellipse class="nose" cx="190" cy="104" rx="10" ry="7" />
+                    <circle class="eye" cx="165" cy="82" r="6" />
+                    <path class="brow" d="M154 76 Q168 64 180 74" />
+                    <path class="mouth" d="M170 119 Q182 129 191 118" />
+                  </g>
+                  <g class="arm back-arm">
+                    <path class="arm-shape" d="M102 128 C80 138, 76 176, 96 196 L116 184 C104 170, 104 148, 118 138 Z" />
+                    <ellipse class="glove" cx="102" cy="198" rx="26" ry="22" />
+                  </g>
+                  <g class="arm front-arm">
+                    <path class="arm-shape" d="M146 130 C166 128, 190 144, 196 168 L176 178 C170 158, 158 144, 144 142 Z" />
+                    <ellipse class="glove" cx="196" cy="180" rx="28" ry="24" />
+                  </g>
+                </svg>
+              </div>
+              <div class="hit-track" id="hit-track-pro"></div>
+            </div>
+
+            <div class="arena-center">
+              <div class="topic-card">
+                <p class="eyebrow">Streitfrage</p>
+                <h2>Soll Sport ein Promotionsfach werden?</h2>
+                <p>Valide Abwehr wechselt die Initiative. Drei Treffer bedeuten KO.</p>
+              </div>
+            </div>
+
+            <div class="fighter contra" id="fighter-contra">
+              <div class="fighter-banner">
+                <span class="side-tag">CONTRA</span>
+                <strong id="fighter-contra-name">Känguru Blau</strong>
+              </div>
+              <div class="speech-bubble" id="bubble-contra"></div>
+              <div class="roo-art">
+                <svg viewBox="0 0 260 310" aria-hidden="true">
+                  <ellipse class="shadow" cx="130" cy="286" rx="76" ry="18" />
+                  <path
+                    class="tail"
+                    d="M70 220 C28 206, 16 162, 50 148 C94 130, 122 184, 108 226"
+                  />
+                  <g class="back-leg">
+                    <ellipse class="leg" cx="92" cy="242" rx="20" ry="56" />
+                    <ellipse class="foot" cx="84" cy="288" rx="34" ry="12" />
+                  </g>
+                  <g class="body">
+                    <ellipse class="torso" cx="130" cy="162" rx="64" ry="82" />
+                    <ellipse class="belly" cx="134" cy="177" rx="36" ry="54" />
+                    <path class="shorts" d="M82 182 L178 182 L168 230 L94 230 Z" />
+                    <path class="waistband" d="M86 178 L174 178 L170 194 L90 194 Z" />
+                  </g>
+                  <g class="front-leg">
+                    <ellipse class="leg" cx="158" cy="245" rx="20" ry="58" />
+                    <ellipse class="foot" cx="171" cy="288" rx="34" ry="12" />
+                  </g>
+                  <g class="head">
+                    <path class="ear ear-back" d="M122 42 C128 10, 152 10, 158 46 Z" />
+                    <path class="ear ear-front" d="M156 44 C162 10, 190 14, 194 54 Z" />
+                    <ellipse class="helmet" cx="151" cy="78" rx="58" ry="38" />
+                    <ellipse class="face" cx="150" cy="94" rx="52" ry="48" />
+                    <ellipse class="muzzle" cx="170" cy="108" rx="30" ry="18" />
+                    <ellipse class="nose" cx="190" cy="104" rx="10" ry="7" />
+                    <circle class="eye" cx="165" cy="82" r="6" />
+                    <path class="brow" d="M154 76 Q168 64 180 74" />
+                    <path class="mouth" d="M170 119 Q182 129 191 118" />
+                  </g>
+                  <g class="arm back-arm">
+                    <path class="arm-shape" d="M102 128 C80 138, 76 176, 96 196 L116 184 C104 170, 104 148, 118 138 Z" />
+                    <ellipse class="glove" cx="102" cy="198" rx="26" ry="22" />
+                  </g>
+                  <g class="arm front-arm">
+                    <path class="arm-shape" d="M146 130 C166 128, 190 144, 196 168 L176 178 C170 158, 158 144, 144 142 Z" />
+                    <ellipse class="glove" cx="196" cy="180" rx="28" ry="24" />
+                  </g>
+                </svg>
+              </div>
+              <div class="hit-track" id="hit-track-contra"></div>
+            </div>
+          </div>
+
+          <div class="cards-section">
+            <div class="panel-heading compact">
+              <h2>Deine Karten</h2>
+              <p id="hand-caption">Wähle ein Argument, sobald du am Zug bist.</p>
+            </div>
+            <div class="cards-grid" id="cards-grid"></div>
+            <div class="card-actions">
+              <button id="play-card-btn" class="primary-btn" disabled>Karte spielen</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <section class="panel">
+            <div class="panel-heading compact">
+              <h2>Kampfprotokoll</h2>
+              <p>Die letzten Schlagwechsel in der Arena.</p>
+            </div>
+            <div class="history-list" id="history-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading compact">
+              <h2>Spielregel</h2>
+              <p>Kurz, klar und kampfbereit.</p>
+            </div>
+            <ol class="rules">
+              <li>Die erste Person startet als Pro, die zweite als Contra.</li>
+              <li>Angriff: Ein Argument aus der eigenen Hand ausspielen.</li>
+              <li>Abwehr: Die Gegenseite wählt ein passendes Gegenargument.</li>
+              <li>Valide Abwehr = kein Treffer und Initiative-Wechsel.</li>
+              <li>Ungültige Abwehr = Volltreffer. Nach drei Treffern ist KO.</li>
+            </ol>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

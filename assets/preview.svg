@@ -1,0 +1,105 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="640" y1="0" x2="640" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10233F"/>
+      <stop offset="1" stop-color="#05070D"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(640 114) rotate(90) scale(120 360)">
+      <stop stop-color="#FFF7D2" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFF7D2" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ropeRed" x1="0" y1="0" x2="1280" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A72"/>
+      <stop offset="1" stop-color="#B9252C"/>
+    </linearGradient>
+    <linearGradient id="ropeBlue" x1="0" y1="0" x2="1280" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8BC0FF"/>
+      <stop offset="1" stop-color="#2E83FF"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="640" y1="450" x2="640" y2="692" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8D2A9"/>
+      <stop offset="1" stop-color="#9B7347"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <ellipse cx="640" cy="114" rx="360" ry="120" fill="url(#spot)"/>
+  <circle cx="246" cy="104" r="58" fill="#FFD89A" fill-opacity="0.18"/>
+  <circle cx="1044" cy="120" r="68" fill="#B9D7FF" fill-opacity="0.14"/>
+
+  <rect x="0" y="470" width="1280" height="250" fill="url(#floor)"/>
+  <rect x="0" y="394" width="1280" height="14" fill="url(#ropeRed)"/>
+  <rect x="0" y="440" width="1280" height="14" fill="#F7F0E0"/>
+  <rect x="0" y="486" width="1280" height="14" fill="url(#ropeBlue)"/>
+
+  <g opacity="0.16" fill="#F7E4C5">
+    <circle cx="118" cy="280" r="22"/>
+    <circle cx="170" cy="302" r="30"/>
+    <circle cx="1112" cy="300" r="28"/>
+    <circle cx="1160" cy="274" r="20"/>
+  </g>
+
+  <g transform="translate(238 162)">
+    <ellipse cx="142" cy="428" rx="120" ry="24" fill="#000000" fill-opacity="0.2"/>
+    <path d="M30 330C-28 308 -36 242 12 226C68 206 116 270 100 332" fill="#A55F25"/>
+    <ellipse cx="124" cy="240" rx="84" ry="118" fill="#B86D2C"/>
+    <ellipse cx="142" cy="256" rx="48" ry="74" fill="#F1DEB9"/>
+    <path d="M78 268H210L196 346H96L78 268Z" fill="#D93535"/>
+    <path d="M84 258H204L202 282H86L84 258Z" fill="#F7F3EC"/>
+    <ellipse cx="92" cy="362" rx="26" ry="86" fill="#A55F25"/>
+    <ellipse cx="204" cy="362" rx="26" ry="86" fill="#A55F25"/>
+    <ellipse cx="76" cy="438" rx="44" ry="14" fill="#2B170E"/>
+    <ellipse cx="220" cy="438" rx="44" ry="14" fill="#2B170E"/>
+    <path d="M112 122C120 74 154 72 166 128" fill="#B86D2C"/>
+    <path d="M162 126C170 74 212 82 220 144" fill="#B86D2C"/>
+    <ellipse cx="176" cy="160" rx="82" ry="54" fill="#D62F35"/>
+    <ellipse cx="176" cy="188" rx="74" ry="62" fill="#C57A35"/>
+    <ellipse cx="208" cy="206" rx="40" ry="24" fill="#F1DEB9"/>
+    <ellipse cx="234" cy="202" rx="14" ry="10" fill="#24150D"/>
+    <circle cx="192" cy="166" r="8" fill="#24150D"/>
+    <path d="M174 154C188 138 210 140 222 152" stroke="#24150D" stroke-width="6" stroke-linecap="round"/>
+    <path d="M206 224C220 234 232 234 244 222" stroke="#24150D" stroke-width="6" stroke-linecap="round"/>
+    <path d="M74 188C46 196 42 250 74 284L110 266C92 244 96 208 120 194" fill="#A55F25"/>
+    <ellipse cx="82" cy="286" rx="42" ry="34" fill="#E24343"/>
+    <path d="M178 202C236 192 286 214 304 262L258 282C246 240 220 214 180 210" fill="#B86D2C"/>
+    <ellipse cx="308" cy="274" rx="48" ry="38" fill="#E24343"/>
+  </g>
+
+  <g transform="translate(742 160)">
+    <ellipse cx="142" cy="428" rx="120" ry="24" fill="#000000" fill-opacity="0.2"/>
+    <path d="M256 330C314 308 322 242 274 226C218 206 170 270 186 332" fill="#CF8A31"/>
+    <ellipse cx="162" cy="240" rx="84" ry="118" fill="#D18C34"/>
+    <ellipse cx="144" cy="256" rx="48" ry="74" fill="#F5E3B9"/>
+    <path d="M74 268H206L188 346H70L74 268Z" fill="#2E83FF"/>
+    <path d="M80 258H200L198 282H82L80 258Z" fill="#F7F3EC"/>
+    <ellipse cx="86" cy="362" rx="26" ry="86" fill="#CF8A31"/>
+    <ellipse cx="198" cy="362" rx="26" ry="86" fill="#CF8A31"/>
+    <ellipse cx="66" cy="438" rx="44" ry="14" fill="#2B170E"/>
+    <ellipse cx="210" cy="438" rx="44" ry="14" fill="#2B170E"/>
+    <path d="M102 126C110 74 152 82 160 144" fill="#CF8A31"/>
+    <path d="M152 122C160 74 194 72 206 128" fill="#CF8A31"/>
+    <ellipse cx="138" cy="160" rx="82" ry="54" fill="#2670DD"/>
+    <ellipse cx="138" cy="188" rx="74" ry="62" fill="#D18C34"/>
+    <ellipse cx="108" cy="206" rx="40" ry="24" fill="#F5E3B9"/>
+    <ellipse cx="82" cy="202" rx="14" ry="10" fill="#24150D"/>
+    <circle cx="124" cy="166" r="8" fill="#24150D"/>
+    <path d="M142 154C128 138 106 140 94 152" stroke="#24150D" stroke-width="6" stroke-linecap="round"/>
+    <path d="M110 224C96 234 84 234 72 222" stroke="#24150D" stroke-width="6" stroke-linecap="round"/>
+    <path d="M242 188C270 196 274 250 242 284L206 266C224 244 220 208 196 194" fill="#CF8A31"/>
+    <ellipse cx="234" cy="286" rx="42" ry="34" fill="#377EED"/>
+    <path d="M136 202C78 192 28 214 10 262L56 282C68 240 94 214 134 210" fill="#D18C34"/>
+    <ellipse cx="6" cy="274" rx="48" ry="38" fill="#377EED"/>
+  </g>
+
+  <g>
+    <rect x="372" y="44" width="536" height="96" rx="48" fill="#090E16" fill-opacity="0.7" stroke="#F6C55D" stroke-opacity="0.3" stroke-width="2"/>
+    <text x="640" y="86" text-anchor="middle" fill="#F6C55D" font-family="Arial, Helvetica, sans-serif" font-size="20" letter-spacing="5">ARGUMENTESPIEL FUER ZWEI COMPUTER</text>
+    <text x="640" y="124" text-anchor="middle" fill="#FFF2D5" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="42">ARGUMENTEBOXEN</text>
+  </g>
+
+  <g>
+    <rect x="420" y="548" width="440" height="92" rx="24" fill="#0B121C" fill-opacity="0.76" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="2"/>
+    <text x="640" y="584" text-anchor="middle" fill="#F6C55D" font-family="Arial, Helvetica, sans-serif" font-size="18" letter-spacing="4">STREITFRAGE</text>
+    <text x="640" y="620" text-anchor="middle" fill="#FFF2D5" font-family="Arial, Helvetica, sans-serif" font-size="28">Soll Sport ein Promotionsfach werden?</text>
+  </g>
+</svg>
