@@ -374,8 +374,8 @@ function maybePlayMotionCue(cue) {
   const defenderEl = cue.defenderSide === "contra" ? els.fighterContra : els.fighterPro;
 
   if (cue.type === "match-start") {
-    setAnnouncer(cue.rematch ? "Revanche" : "Die Glocke laeutet");
-    showBubble("pro", cue.rematch ? "Neue Runde, neues Glueck." : "Pro eröffnet den Kampf.", 1800);
+    setAnnouncer(cue.rematch ? "Revanche" : "Die Glocke läutet");
+    showBubble("pro", cue.rematch ? "Neue Runde, neues Glück." : "Pro eröffnet den Kampf.", 1800);
     showBubble("contra", cue.rematch ? "Contra ist sofort wieder da." : "Contra ist bereit.", 1800);
     return;
   }

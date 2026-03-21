@@ -6,6 +6,7 @@ const { WebSocketServer } = require("ws");
 const { CARD_LIBRARY, SIDE_DECKS, getPublicCard } = require("./src/cards");
 
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 const HITS_TO_KO = 3;
 
 const app = express();
@@ -591,6 +592,6 @@ wss.on("connection", (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`argumenteboxen läuft auf http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`argumenteboxen läuft auf http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
 });
