@@ -27,6 +27,9 @@ const els = {
   cardsGrid: document.getElementById("cards-grid"),
   handCaption: document.getElementById("hand-caption"),
   historyList: document.getElementById("history-list"),
+  logicSummary: document.getElementById("logic-summary"),
+  logicCriteria: document.getElementById("logic-criteria"),
+  logicReference: document.getElementById("logic-reference"),
   fighterPro: document.getElementById("fighter-pro"),
   fighterContra: document.getElementById("fighter-contra"),
   fighterProName: document.getElementById("fighter-pro-name"),
@@ -254,6 +257,7 @@ function renderCards() {
           <span class="card-tag">${state.room.phase === "attack" ? "Angriff" : "Abwehr"}</span>
           <h3>${escapeHtml(card.title)}</h3>
           <p>${escapeHtml(card.hook)}</p>
+          <p><strong>Logik:</strong> ${escapeHtml(card.logicLabel)} · ${escapeHtml(card.logicValidity)}</p>
           <p>${escapeHtml(card.detail)}</p>
         </button>
       `;
@@ -319,6 +323,69 @@ function renderPlayers() {
   els.fighterContra.classList.toggle("active-turn", state.room?.activePlayerId === contra?.id);
 }
 
+function renderLogicPanel() {
+  const judgement = state.room?.logicJudgement;
+  const reference = state.room?.logicReference;
+
+  if (!judgement) {
+    els.logicSummary.innerHTML = "<p class='history-empty'>Sobald eine Abwehr gespielt wurde, erscheint hier das logische Urteil.</p>";
+    els.logicCriteria.innerHTML = "";
+  } else {
+    els.logicSummary.innerHTML = `
+      <article class="logic-card ${judgement.verdict}">
+        <strong>${escapeHtml(judgement.summary)}</strong>
+        <p>${escapeHtml(judgement.explanation)}</p>
+        <p><strong>Schlussart:</strong> ${escapeHtml(judgement.defenseProfile)} · <strong>Geltung:</strong> ${escapeHtml(judgement.validityLevel)}</p>
+        ${judgement.fallacy ? `<p><strong>Fehlschluss-Risiko:</strong> ${escapeHtml(judgement.fallacy.label)}</p>` : ""}
+      </article>
+    `;
+
+    els.logicCriteria.innerHTML = judgement.criteria
+      .map(
+        (criterion) => `
+          <article class="criterion ${criterion.passed ? "passed" : "failed"}">
+            <strong>${escapeHtml(criterion.label)}</strong>
+            <p>${escapeHtml(criterion.note)}</p>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  if (!reference) {
+    els.logicReference.innerHTML = "";
+    return;
+  }
+
+  els.logicReference.innerHTML = `
+    <div class="logic-reference-block">
+      <strong>Kriterien</strong>
+      <ul class="logic-mini-list">
+        ${reference.rubric
+          .map((item) => `<li><span>${escapeHtml(item.label)}</span> ${escapeHtml(item.description)}</li>`)
+          .join("")}
+      </ul>
+    </div>
+    <div class="logic-reference-block">
+      <strong>Gültige Schlussarten</strong>
+      <ul class="logic-mini-list">
+        ${reference.validForms
+          .map((item) => `<li><span>${escapeHtml(item.label)}</span> ${escapeHtml(item.description)}</li>`)
+          .join("")}
+      </ul>
+    </div>
+    <div class="logic-reference-block">
+      <strong>Typische Fehlschlüsse</strong>
+      <ul class="logic-mini-list">
+        ${reference.fallacies
+          .slice(0, 8)
+          .map((item) => `<li><span>${escapeHtml(item.label)}</span> ${escapeHtml(item.description)}</li>`)
+          .join("")}
+      </ul>
+    </div>
+  `;
+}
+
 function renderStatus() {
   els.roomCodeDisplay.textContent = state.room?.roomCode || "-----";
   els.statusLine.textContent = state.room?.statusText || "Warte auf die Arena.";
@@ -333,6 +400,7 @@ function render() {
   renderPlayers();
   renderCards();
   renderHistory();
+  renderLogicPanel();
 }
 
 function clearMotionClasses() {

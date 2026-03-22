@@ -4,6 +4,11 @@ const path = require("path");
 const crypto = require("crypto");
 const { WebSocketServer } = require("ws");
 const { CARD_LIBRARY, SIDE_DECKS, getPublicCard } = require("./src/cards");
+const {
+  LOGIC_REFERENCE,
+  getCardLogicProfile,
+  evaluateDefense
+} = require("./src/logic-rubric");
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -68,6 +73,7 @@ function createRoom(hostSocket, name) {
     damage: { pro: 0, contra: 0 },
     usedCards: new Set(),
     history: [],
+    logicJudgement: null,
     motionCue: null,
     cueId: 0,
     winnerSide: null,
@@ -127,6 +133,7 @@ function resetRoomForMatch(room) {
   room.usedCards = new Set();
   room.history = [];
   room.winnerSide = null;
+  room.logicJudgement = null;
 }
 
 function serializePlayer(room, playerId, viewerId) {
@@ -232,16 +239,21 @@ function serializeRoom(room, viewerId) {
         }
       : null,
     history: room.history.slice(-8),
+    logicJudgement: room.logicJudgement,
+    logicReference: LOGIC_REFERENCE,
     motionCue: room.motionCue,
     yourHand: viewer
       ? viewer.hand.map((cardId) => {
           const card = CARD_LIBRARY[cardId];
+          const logic = getCardLogicProfile(cardId);
           return {
             id: card.id,
             side: card.side,
             title: card.title,
             hook: card.hook,
             detail: card.detail,
+            logicLabel: logic.label,
+            logicValidity: logic.validity,
             used: room.usedCards.has(cardId)
           };
         })
@@ -390,6 +402,7 @@ function playCard(socket, cardId) {
     room.phase = "defend";
     room.activePlayerId = defenderId;
     room.statusText = `${player.name} greift mit "${card.title}" an.`;
+    room.logicJudgement = null;
     nextCue(room, {
       type: "attack",
       attackerSide: player.side,
@@ -421,6 +434,7 @@ function playCard(socket, cardId) {
   const attacker = room.players.get(room.pendingAttack.attackerId);
   const defender = player;
   const valid = attackCard.validCounters.includes(card.id);
+  room.logicJudgement = evaluateDefense(attackCard, card, valid);
 
   if (valid) {
     room.phase = "attack";
@@ -547,6 +561,7 @@ function handleDisconnect(socket) {
   room.usedCards = new Set();
   room.history = room.history.slice(-5);
   room.winnerSide = null;
+  room.logicJudgement = null;
   broadcastRoom(room);
 }
 

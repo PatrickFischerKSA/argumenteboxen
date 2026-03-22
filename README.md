@@ -15,6 +15,7 @@ Zwei Kängurus treten als `Pro` und `Contra` im Ring gegeneinander an. Ein Angri
 - Schnelle Arena-Animationen mit Angriff, Parade, Treffer und KO
 - Schaltbare Browser-Sounds für Glocke, Schläge und Volltreffer
 - Revanche im selben Raum ohne neues Setup
+- Integriertes Logikraster mit Schlussarten und Fehlschluss-Prüfung aus dem Dossier zur Argumentationslehre
 - Komplett getrenntes Projekt, nicht mit anderen Workspace-Apps vermischt
 
 ## Spielidee
@@ -66,6 +67,16 @@ Die Argumentkarten wurden aus der Materialsammlung zum Thema
 
 **Was soll Schule bewerten: ganzheitliche Bildung oder primär kognitive Leistung?**
 
+Zusätzlich bewertet das Spiel jede Abwehr mit einem Logikraster aus dem Dossier
+`Argumentationslehre – Gültige und ungültige Formen des Schließens`.
+Das Raster prüft:
+
+- These und Prämissen
+- direkten Bezug des Gegenarguments
+- passende Schlussart
+- Tragfähigkeit der Konklusion
+- Fehlschluss-Risiko
+
 ## Technik
 
 - `Node.js`
@@ -98,6 +109,8 @@ Nach dem Deploy ist das Spiel über eine öffentliche `onrender.com`-URL spielba
   Raumlogik, Match-Zustände, Treffer, KO und Revanche
 - `src/cards.js`
   Argumentkarten und gültige Gegenargumente
+- `src/logic-rubric.js`
+  Schlussarten, Fehlschlüsse und Logikbewertung nach dem Dossier
 - `public/index.html`
   Spieloberfläche mit Arena, Setup und Kartenbereich
 - `public/styles.css`

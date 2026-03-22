@@ -718,6 +718,69 @@ button {
   gap: 12px;
 }
 
+.logic-summary,
+.logic-criteria,
+.logic-reference {
+  display: grid;
+  gap: 12px;
+}
+
+.logic-card,
+.criterion,
+.logic-reference-block {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logic-card.valid {
+  border-color: rgba(126, 224, 157, 0.28);
+  background: rgba(126, 224, 157, 0.08);
+}
+
+.logic-card.invalid {
+  border-color: rgba(255, 141, 115, 0.28);
+  background: rgba(255, 141, 115, 0.08);
+}
+
+.criterion.passed {
+  border-color: rgba(126, 224, 157, 0.24);
+}
+
+.criterion.failed {
+  border-color: rgba(255, 141, 115, 0.24);
+}
+
+.logic-card strong,
+.criterion strong,
+.logic-reference-block strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.logic-card p,
+.criterion p,
+.logic-reference-block p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.logic-mini-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.logic-mini-list span {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .history-item {
   padding: 14px 16px;
   border-radius: 18px;
