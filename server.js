@@ -19,6 +19,7 @@ const {
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const HITS_TO_KO = 3;
+const DEMO_FORCE_HIT_AT_ATTACK = 3;
 const CARD_TURN_TIME_MS = 30_000;
 const TEXT_TURN_TIME_MS = 90_000;
 const BOT_DELAY_MIN_MS = 900;
@@ -848,7 +849,10 @@ function performCardPlay(room, playerId, cardId) {
   const attackCard = CARD_LIBRARY[room.pendingAttack.cardId];
   const attacker = room.players.get(room.pendingAttack.attackerId);
   const defender = player;
-  const forceDemoHit = room.matchMode === "demo" && !room.demoForcedHitDone && room.demoAttackCount >= 4;
+  const forceDemoHit =
+    room.matchMode === "demo" &&
+    !room.demoForcedHitDone &&
+    room.demoAttackCount >= DEMO_FORCE_HIT_AT_ATTACK;
   const valid = forceDemoHit ? false : attackCard.validCounters.includes(card.id);
   if (forceDemoHit) {
     room.demoForcedHitDone = true;
@@ -1011,7 +1015,10 @@ function performTextMove(room, playerId, rawText) {
     attackSide: attacker.side,
     defenseSide: defender.side
   });
-  const forceDemoHit = room.matchMode === "demo" && !room.demoForcedHitDone && room.demoAttackCount >= 4;
+  const forceDemoHit =
+    room.matchMode === "demo" &&
+    !room.demoForcedHitDone &&
+    room.demoAttackCount >= DEMO_FORCE_HIT_AT_ATTACK;
   const isValid = forceDemoHit ? false : evaluation.isValid;
   if (forceDemoHit) {
     room.demoForcedHitDone = true;
@@ -1134,7 +1141,7 @@ function chooseBotCard(room, bot) {
     const forceDemoHit =
       room.matchMode === "demo" &&
       !room.demoForcedHitDone &&
-      room.demoAttackCount >= 4 &&
+      room.demoAttackCount >= DEMO_FORCE_HIT_AT_ATTACK &&
       invalidCounters.length > 0;
 
     if (forceDemoHit) {

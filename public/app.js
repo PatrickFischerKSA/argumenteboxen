@@ -314,6 +314,26 @@ function playSample(
   }
 }
 
+function speakArena(text, { delay = 0, rate = 1.18, pitch = 1.05, volume = 1 } = {}) {
+  if (!state.audioEnabled || !("speechSynthesis" in window) || !text) {
+    return;
+  }
+
+  window.setTimeout(() => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    utterance.lang = "de-DE";
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.volume = Math.min(1, volume);
+    utterance.voice =
+      voices.find((voice) => voice.lang?.startsWith("de")) ||
+      voices.find((voice) => voice.lang?.startsWith("en")) ||
+      null;
+    window.speechSynthesis.speak(utterance);
+  }, delay);
+}
+
 function stopCrowdAmbience() {
   if (state.crowdSource) {
     try {
@@ -678,6 +698,8 @@ function playCrowdWhistle() {
 function playCrowdCheer() {
   playSample("crowdCall", { volume: 4.2, delay: 18, layers: 3, staggerMs: 72, rate: 1.02, rateStep: 0.03 });
   playSample("crowdCall2", { volume: 3.8, delay: 92, layers: 3, staggerMs: 90, rate: 1.06, rateStep: 0.04 });
+  speakArena("Woo!", { delay: 30, rate: 1.34, pitch: 1.16, volume: 1 });
+  speakArena("Ja!", { delay: 150, rate: 1.38, pitch: 1.2, volume: 1 });
   playCrowdRoar({ gain: 0.02, duration: 0.46, highpass: 260, lowpass: 3200 });
   playCrowdClaps(10, 78, 0.24);
   playCrowdYell({ frequency: 660, slideTo: 1040, duration: 0.3, gain: 0.32, delay: 12 });
@@ -757,6 +779,9 @@ function playCueSound(cue) {
       playSample("crowdKo", { volume: 5, layers: 3, staggerMs: 120, rate: 0.96, rateStep: 0.05 });
       playSample("crowdCall", { volume: 4.6, delay: 56, layers: 3, staggerMs: 86, rate: 0.98, rateStep: 0.04 });
       playSample("crowdCall2", { volume: 4.2, delay: 132, layers: 3, staggerMs: 100, rate: 1.02, rateStep: 0.05 });
+      speakArena("Ooooooh!", { delay: 12, rate: 1.1, pitch: 0.82, volume: 1 });
+      speakArena("K O!", { delay: 180, rate: 1.22, pitch: 0.9, volume: 1 });
+      speakArena("Aus!", { delay: 360, rate: 1.34, pitch: 1.02, volume: 1 });
       playCrowdRoar({ gain: 0.11, duration: 1.08, highpass: 160, lowpass: 3200 });
       playCrowdClaps(22, 56, 0.3);
       playCrowdYell({ frequency: 640, slideTo: 1240, duration: 0.44, gain: 0.44 });
