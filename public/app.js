@@ -9,6 +9,7 @@ const state = {
   timerInterval: null,
   motionResetTimer: null,
   audioEnabled: false,
+  audioManuallyDisabled: false,
   musicEnabled: false,
   audioCtx: null,
   masterGain: null,
@@ -130,7 +131,7 @@ function updateSetupOptions() {
 }
 
 function createRoomWithCurrentSettings() {
-  ensureAudio();
+  primeArenaAudio();
   const name = els.nameInput.value.trim();
   const matchMode = els.matchModeSelect.value;
   state.pendingAutoStartDemo = matchMode === "demo";
@@ -217,9 +218,22 @@ function ensureAudio() {
 
   state.audioCtx = new AudioContextClass();
   state.masterGain = state.audioCtx.createGain();
-  state.masterGain.gain.value = 0.08;
+  state.masterGain.gain.value = 0.14;
   state.masterGain.connect(state.audioCtx.destination);
   state.noiseBuffer = createNoiseBuffer(state.audioCtx);
+  return true;
+}
+
+function primeArenaAudio() {
+  if (!ensureAudio()) {
+    return false;
+  }
+
+  if (!state.audioEnabled && !state.audioManuallyDisabled) {
+    state.audioEnabled = true;
+    updateAudioButton();
+  }
+
   return true;
 }
 
@@ -1197,19 +1211,19 @@ els.createRoomBtn.addEventListener("click", () => {
 });
 
 els.joinRoomBtn.addEventListener("click", () => {
-  ensureAudio();
+  primeArenaAudio();
   const name = els.nameInput.value.trim();
   const roomCode = els.roomCodeInput.value.trim().toUpperCase();
   send({ type: "join_room", name, roomCode });
 });
 
 els.startMatchBtn.addEventListener("click", () => {
-  ensureAudio();
+  primeArenaAudio();
   send({ type: "start_match" });
 });
 
 els.arenaStartBtn.addEventListener("click", () => {
-  ensureAudio();
+  primeArenaAudio();
   send({ type: "start_match" });
 });
 
@@ -1225,7 +1239,7 @@ els.infoTabs.forEach((button) => {
 });
 
 els.submitTextBtn.addEventListener("click", () => {
-  ensureAudio();
+  primeArenaAudio();
   const text = state.textDraft.trim();
   if (text.length < 18) {
     showNotice("Bitte formuliere ein etwas ausführlicheres Argument.", "error");
@@ -1250,8 +1264,10 @@ els.audioToggleBtn.addEventListener("click", () => {
       return;
     }
     state.audioEnabled = true;
+    state.audioManuallyDisabled = false;
   } else {
     state.audioEnabled = false;
+    state.audioManuallyDisabled = true;
   }
 
   updateAudioButton();
