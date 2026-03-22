@@ -555,6 +555,7 @@ function renderCards() {
   els.actionPanelTitle.textContent = textLevel ? "Dein Textzug" : "Deine Karten";
 
   if (textLevel) {
+    els.selectedCardPanel.innerHTML = "";
     renderIdeas(originalCards);
     updateTextControls();
     return;

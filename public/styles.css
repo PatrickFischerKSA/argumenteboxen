@@ -295,7 +295,7 @@ button {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .notice {
@@ -803,6 +803,7 @@ button {
   gap: 14px;
   min-height: 0;
   height: clamp(500px, calc(100vh - 360px), 700px);
+  overflow: hidden;
   padding: 18px;
   border-radius: 28px;
   background: rgba(8, 14, 24, 0.62);
@@ -820,6 +821,11 @@ button {
   display: grid;
   gap: 14px;
   min-height: 0;
+}
+
+.text-mode-panel {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .cards-grid {
@@ -1019,6 +1025,7 @@ button {
 .ideas-panel {
   display: grid;
   gap: 16px;
+  min-height: 0;
 }
 
 .text-move-field {
@@ -1042,6 +1049,9 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .idea-card {
