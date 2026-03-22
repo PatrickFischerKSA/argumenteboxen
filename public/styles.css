@@ -164,13 +164,12 @@ button {
 
 .layout {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr) 340px;
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
 
-.setup-panel,
-.sidebar {
+.setup-panel {
   position: sticky;
   top: 20px;
 }
@@ -185,7 +184,7 @@ button {
 
 .setup-panel,
 .battle-panel,
-.sidebar .panel {
+.sidebar {
   padding: 22px;
 }
 
@@ -323,6 +322,11 @@ button {
   display: grid;
   gap: 18px;
   min-height: calc(100vh - 250px);
+}
+
+.battle-panel,
+.sidebar {
+  grid-column: 2;
 }
 
 .battle-stage {
@@ -1084,8 +1088,41 @@ button {
 
 .sidebar {
   display: grid;
-  gap: 20px;
-  max-height: calc(100vh - 24px);
+  gap: 18px;
+}
+
+.sidebar-topbar {
+  display: grid;
+  gap: 14px;
+}
+
+.sidebar-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sidebar-tab {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar-tab.active {
+  background: rgba(246, 197, 93, 0.14);
+  border-color: rgba(246, 197, 93, 0.28);
+  color: var(--gold);
+}
+
+.sidebar-pane {
+  display: grid;
+  gap: 16px;
+  max-height: 420px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1452,8 +1489,7 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .setup-panel,
-  .sidebar {
+  .setup-panel {
     position: static;
     top: auto;
   }
@@ -1482,10 +1518,7 @@ button {
   }
 
   .sidebar {
-    grid-template-columns: 1fr 1fr;
-    max-height: none;
-    overflow: visible;
-    padding-right: 0;
+    grid-column: auto;
   }
 }
 
@@ -1502,6 +1535,11 @@ button {
 
   .battle-topbar {
     grid-template-columns: 1fr;
+  }
+
+  .battle-panel,
+  .sidebar {
+    grid-column: auto;
   }
 
   .text-mode-actions {
@@ -1537,7 +1575,7 @@ button {
 @media (max-width: 720px) {
   .setup-panel,
   .battle-panel,
-  .sidebar .panel {
+  .sidebar {
     padding: 18px;
   }
 
@@ -1568,7 +1606,13 @@ button {
   }
 
   .sidebar {
-    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .sidebar-pane {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .cards-grid {

@@ -224,8 +224,20 @@
           </div>
         </section>
 
-        <aside class="sidebar">
-          <section class="panel">
+        <aside class="panel sidebar">
+          <div class="sidebar-topbar">
+            <div class="panel-heading compact">
+              <h2>Arenainfo</h2>
+              <p>Wechsle zwischen Protokoll, Regeln und Logikraster.</p>
+            </div>
+            <div class="sidebar-tabs" role="tablist" aria-label="Arenainfo">
+              <button class="sidebar-tab active" data-info-tab="history" type="button">Protokoll</button>
+              <button class="sidebar-tab" data-info-tab="logic" type="button">Logik</button>
+              <button class="sidebar-tab" data-info-tab="rules" type="button">Regeln</button>
+            </div>
+          </div>
+
+          <section class="sidebar-pane" data-info-panel="history">
             <div class="panel-heading compact">
               <h2>Kampfprotokoll</h2>
               <p>Die letzten Schlagwechsel in der Arena.</p>
@@ -233,7 +245,17 @@
             <div class="history-list" id="history-list"></div>
           </section>
 
-          <section class="panel">
+          <section class="sidebar-pane hidden" data-info-panel="logic">
+            <div class="panel-heading compact">
+              <h2>Logikraster</h2>
+              <p>Urteil nach dem Dossier zur formalen Logik.</p>
+            </div>
+            <div class="logic-summary" id="logic-summary"></div>
+            <div class="logic-criteria" id="logic-criteria"></div>
+            <div class="logic-reference" id="logic-reference"></div>
+          </section>
+
+          <section class="sidebar-pane hidden" data-info-panel="rules">
             <div class="panel-heading compact">
               <h2>Spielregel</h2>
               <p>Kurz, klar und kampfbereit.</p>
@@ -245,16 +267,6 @@
               <li>Valide Abwehr = kein Treffer und Initiative-Wechsel.</li>
               <li>Ungültige Abwehr = Volltreffer. Nach drei Treffern ist KO.</li>
             </ol>
-          </section>
-
-          <section class="panel">
-            <div class="panel-heading compact">
-              <h2>Logikraster</h2>
-              <p>Urteil nach dem Dossier zur formalen Logik.</p>
-            </div>
-            <div class="logic-summary" id="logic-summary"></div>
-            <div class="logic-criteria" id="logic-criteria"></div>
-            <div class="logic-reference" id="logic-reference"></div>
           </section>
         </aside>
       </main>

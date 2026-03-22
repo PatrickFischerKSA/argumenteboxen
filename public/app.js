@@ -2,6 +2,7 @@ const state = {
   ws: null,
   room: null,
   selectedCardId: null,
+  activeInfoTab: "history",
   textDraft: "",
   lastCueId: null,
   timerInterval: null,
@@ -69,7 +70,9 @@ const els = {
   arenaImpact: document.getElementById("arena-impact"),
   arenaAnnouncer: document.getElementById("arena-announcer"),
   hitTrackPro: document.getElementById("hit-track-pro"),
-  hitTrackContra: document.getElementById("hit-track-contra")
+  hitTrackContra: document.getElementById("hit-track-contra"),
+  infoTabs: Array.from(document.querySelectorAll("[data-info-tab]")),
+  infoPanels: Array.from(document.querySelectorAll("[data-info-panel]"))
 };
 
 function currentConfiguredTurnMs() {
@@ -739,6 +742,19 @@ function renderLogicPanel() {
   `;
 }
 
+function renderInfoPanels() {
+  const activeTab = state.activeInfoTab || "history";
+  els.infoTabs.forEach((button) => {
+    const active = button.dataset.infoTab === activeTab;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  els.infoPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.infoPanel !== activeTab);
+  });
+}
+
 function renderRoomMeta() {
   const matchMode = state.room?.matchMode || els.matchModeSelect.value;
   const playLevel = state.room?.playLevel || els.playLevelSelect.value;
@@ -829,6 +845,7 @@ function render() {
   renderCards();
   renderHistory();
   renderLogicPanel();
+  renderInfoPanels();
 }
 
 function clearMotionClasses() {
@@ -981,6 +998,13 @@ els.arenaStartBtn.addEventListener("click", () => {
 
 els.playCardBtn.addEventListener("click", () => {
   sendSelectedCard(state.selectedCardId);
+});
+
+els.infoTabs.forEach((button) => {
+  button.addEventListener("click", () => {
+    state.activeInfoTab = button.dataset.infoTab || "history";
+    renderInfoPanels();
+  });
 });
 
 els.submitTextBtn.addEventListener("click", () => {
