@@ -13,6 +13,7 @@ const {
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const HITS_TO_KO = 3;
+const TURN_TIME_MS = 30_000;
 
 const app = express();
 const server = http.createServer(app);
@@ -70,6 +71,7 @@ function createRoom(hostSocket, name) {
     order: [],
     activePlayerId: null,
     pendingAttack: null,
+    turnTimer: null,
     damage: { pro: 0, contra: 0 },
     usedCards: new Set(),
     history: [],
@@ -124,7 +126,37 @@ function nextCue(room, payload) {
   };
 }
 
+function clearTurnTimer(room) {
+  if (!room.turnTimer) {
+    return;
+  }
+
+  clearTimeout(room.turnTimer.handle);
+  room.turnTimer = null;
+}
+
+function getOpponentId(room, playerId) {
+  return room.order.find((id) => id !== playerId) || null;
+}
+
+function startTurnTimer(room) {
+  clearTurnTimer(room);
+
+  if (room.status !== "active" || !room.activePlayerId) {
+    return;
+  }
+
+  const timerId = crypto.randomUUID();
+  room.turnTimer = {
+    id: timerId,
+    deadlineAt: Date.now() + TURN_TIME_MS,
+    durationMs: TURN_TIME_MS,
+    handle: setTimeout(() => resolveTurnTimeout(room, timerId), TURN_TIME_MS)
+  };
+}
+
 function resetRoomForMatch(room) {
+  clearTurnTimer(room);
   room.status = "active";
   room.phase = "attack";
   room.activePlayerId = room.order[0] || null;
@@ -208,6 +240,7 @@ function serializeRoom(room, viewerId) {
     status: room.status,
     phase: room.phase,
     hitsToKO: HITS_TO_KO,
+    turnTimeMs: TURN_TIME_MS,
     activePlayerId: room.activePlayerId,
     winnerSide: room.winnerSide,
     statusText: room.statusText,
@@ -239,6 +272,12 @@ function serializeRoom(room, viewerId) {
         }
       : null,
     history: room.history.slice(-8),
+    turnTimer: room.turnTimer
+      ? {
+          deadlineAt: room.turnTimer.deadlineAt,
+          durationMs: room.turnTimer.durationMs
+        }
+      : null,
     logicJudgement: room.logicJudgement,
     logicReference: LOGIC_REFERENCE,
     motionCue: room.motionCue,
@@ -332,10 +371,12 @@ function startMatch(socket) {
       ? "Ein neues Match beginnt im selben Raum."
       : "Pro eröffnet den ersten Schlagabtausch."
   });
+  startTurnTimer(room);
   broadcastRoom(room);
 }
 
 function finishMatch(room, winnerSide, loserSide, attackCard, defenseCard) {
+  clearTurnTimer(room);
   room.status = "finished";
   room.phase = "finished";
   room.winnerSide = winnerSide;
@@ -350,6 +391,127 @@ function finishMatch(room, winnerSide, loserSide, attackCard, defenseCard) {
     defenseTitle: defenseCard ? defenseCard.title : null,
     headline: "KO"
   });
+}
+
+function resolveTurnTimeout(room, timerId) {
+  if (!room.turnTimer || room.turnTimer.id !== timerId || room.status !== "active") {
+    return;
+  }
+
+  const timedOutPlayer = room.players.get(room.activePlayerId);
+  if (!timedOutPlayer) {
+    clearTurnTimer(room);
+    return;
+  }
+
+  if (room.phase === "attack") {
+    const opponentId = getOpponentId(room, timedOutPlayer.id);
+    const opponent = room.players.get(opponentId);
+    room.activePlayerId = opponentId;
+    room.pendingAttack = null;
+    room.logicJudgement = null;
+    room.statusText = `${timedOutPlayer.name} hat die 30 Sekunden für den Angriff verpasst. ${opponent.name} übernimmt die Initiative.`;
+    nextCue(room, {
+      type: "timeout-turnover",
+      attackerSide: timedOutPlayer.side,
+      defenderSide: opponent.side,
+      headline: "Zeitstrafe"
+    });
+    addHistory(room, {
+      result: "timeout-turnover",
+      headline: `${timedOutPlayer.name} war zu spät`,
+      body: `Die Angriffsfrist von 30 Sekunden ist abgelaufen. ${opponent.name} übernimmt ohne Treffer.`
+    });
+    startTurnTimer(room);
+    broadcastRoom(room);
+    return;
+  }
+
+  if (room.phase === "defend" && room.pendingAttack) {
+    const attackCard = CARD_LIBRARY[room.pendingAttack.cardId];
+    const attacker = room.players.get(room.pendingAttack.attackerId);
+    const defender = timedOutPlayer;
+    room.logicJudgement = {
+      verdict: "invalid",
+      summary: `${defender.name} hat die Abwehrfrist verpasst.`,
+      reasoningLabel: "Zeitregel",
+      validityLevel: "ungültig",
+      fallacy: {
+        id: "non_sequitur",
+        label: "keine rechtzeitige Widerlegung"
+      },
+      criteria: [
+        {
+          id: "claim",
+          label: "These und Prämissen klar",
+          passed: true,
+          note: `"${attackCard.title}" bleibt unwidersprochen stehen.`
+        },
+        {
+          id: "relevance",
+          label: "Direkter Bezug",
+          passed: false,
+          note: "Es wurde innerhalb von 30 Sekunden kein Gegenargument eingebracht."
+        },
+        {
+          id: "form",
+          label: "Passende Schlussart",
+          passed: false,
+          note: "Ohne fristgerechte Abwehrkarte gibt es keine prüfbare Schlussform."
+        },
+        {
+          id: "inference",
+          label: "Konklusion folgt",
+          passed: false,
+          note: "Die Angriffslogik bleibt in dieser Runde bestehen."
+        },
+        {
+          id: "fallacy",
+          label: "Kein Fehlschluss",
+          passed: false,
+          note: "Die Verteidigung scheitert bereits an der verpassten Frist."
+        }
+      ],
+      explanation: `Die 30 Sekunden für die Abwehr sind abgelaufen. "${attackCard.title}" trifft deshalb ohne rechtzeitige Widerlegung.`,
+      attackProfile: getCardLogicProfile(attackCard.id).label,
+      defenseProfile: "keine Abwehr"
+    };
+
+    room.damage[defender.side] += 1;
+    const hitsTaken = room.damage[defender.side];
+    addHistory(room, {
+      result: hitsTaken >= HITS_TO_KO ? "ko-hit" : "hit",
+      headline: `${attacker.name} profitiert vom Ablauf der Zeit`,
+      body: `${defender.name} hat die Abwehrfrist verpasst und kassiert Treffer ${hitsTaken}/${HITS_TO_KO}.`,
+      attackerSide: attacker.side,
+      defenderSide: defender.side,
+      attackTitle: attackCard.title
+    });
+
+    if (hitsTaken >= HITS_TO_KO) {
+      finishMatch(room, attacker.side, defender.side, attackCard, null);
+      broadcastRoom(room);
+      return;
+    }
+
+    room.phase = "attack";
+    room.activePlayerId = attacker.id;
+    room.pendingAttack = null;
+    room.statusText = `${defender.name} hat die 30 Sekunden zur Abwehr verpasst. ${attacker.name} bleibt in der Offensive.`;
+    nextCue(room, {
+      type: "timeout-hit",
+      attackerSide: attacker.side,
+      defenderSide: defender.side,
+      attackTitle: attackCard.title,
+      damage: hitsTaken,
+      headline: "Zeitdruck-Treffer"
+    });
+    startTurnTimer(room);
+    broadcastRoom(room);
+    return;
+  }
+
+  clearTurnTimer(room);
 }
 
 function playCard(socket, cardId) {
@@ -386,6 +548,7 @@ function playCard(socket, cardId) {
   }
 
   if (room.phase === "attack") {
+    clearTurnTimer(room);
     const defenderId = room.order.find((id) => id !== player.id);
     const defender = room.players.get(defenderId);
     if (!defender) {
@@ -417,6 +580,7 @@ function playCard(socket, cardId) {
       attackerSide: player.side,
       attackTitle: card.title
     });
+    startTurnTimer(room);
     return broadcastRoom(room);
   }
 
@@ -429,6 +593,7 @@ function playCard(socket, cardId) {
   }
 
   room.usedCards.add(cardId);
+  clearTurnTimer(room);
 
   const attackCard = CARD_LIBRARY[room.pendingAttack.cardId];
   const attacker = room.players.get(room.pendingAttack.attackerId);
@@ -458,6 +623,7 @@ function playCard(socket, cardId) {
       attackTitle: attackCard.title,
       defenseTitle: card.title
     });
+    startTurnTimer(room);
     return broadcastRoom(room);
   }
 
@@ -494,6 +660,7 @@ function playCard(socket, cardId) {
     damage: hitsTaken,
     headline: "Volltreffer"
   });
+  startTurnTimer(room);
   broadcastRoom(room);
 }
 
@@ -519,11 +686,13 @@ function handleDisconnect(socket) {
   room.order = room.order.filter((playerId) => playerId !== player.id);
 
   if (room.order.length === 0) {
+    clearTurnTimer(room);
     rooms.delete(room.code);
     return;
   }
 
   if (room.status === "active") {
+    clearTurnTimer(room);
     room.status = "lobby";
     room.phase = "lobby";
     room.activePlayerId = null;
@@ -562,6 +731,7 @@ function handleDisconnect(socket) {
   room.history = room.history.slice(-5);
   room.winnerSide = null;
   room.logicJudgement = null;
+  clearTurnTimer(room);
   broadcastRoom(room);
 }
 

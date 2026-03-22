@@ -3,6 +3,7 @@ const state = {
   room: null,
   selectedCardId: null,
   lastCueId: null,
+  timerInterval: null,
   audioEnabled: false,
   audioCtx: null,
   masterGain: null,
@@ -24,6 +25,9 @@ const els = {
   roomCodeDisplay: document.getElementById("room-code-display"),
   statusLine: document.getElementById("status-line"),
   promptLine: document.getElementById("prompt-line"),
+  turnTimer: document.getElementById("turn-timer"),
+  turnTimerLabel: document.getElementById("turn-timer-label"),
+  turnTimerFill: document.getElementById("turn-timer-fill"),
   cardsGrid: document.getElementById("cards-grid"),
   handCaption: document.getElementById("hand-caption"),
   historyList: document.getElementById("history-list"),
@@ -101,6 +105,41 @@ function ensureAudio() {
 
 function updateAudioButton() {
   els.audioToggleBtn.textContent = state.audioEnabled ? "Sound an" : "Sound aus";
+}
+
+function clearTimerDisplay() {
+  window.clearInterval(state.timerInterval);
+  state.timerInterval = null;
+  els.turnTimer.classList.add("hidden");
+  els.turnTimerLabel.textContent = "30s";
+  els.turnTimerFill.style.width = "100%";
+  els.turnTimerFill.classList.remove("warning");
+}
+
+function renderTimer() {
+  const timer = state.room?.turnTimer;
+  if (!timer || state.room?.status !== "active") {
+    clearTimerDisplay();
+    return;
+  }
+
+  const remainingMs = Math.max(0, timer.deadlineAt - Date.now());
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const ratio = Math.max(0, Math.min(1, remainingMs / timer.durationMs));
+  els.turnTimer.classList.remove("hidden");
+  els.turnTimerLabel.textContent = `${remainingSeconds}s`;
+  els.turnTimerFill.style.width = `${ratio * 100}%`;
+  els.turnTimerFill.classList.toggle("warning", remainingSeconds <= 10);
+}
+
+function restartTimerLoop() {
+  clearTimerDisplay();
+  if (!state.room?.turnTimer || state.room?.status !== "active") {
+    return;
+  }
+
+  renderTimer();
+  state.timerInterval = window.setInterval(renderTimer, 250);
 }
 
 function pulseTone({ frequency, duration, type = "sine", gain = 0.24, slideTo }) {
@@ -393,6 +432,7 @@ function renderStatus() {
   const showStart = Boolean(state.room?.canStart || state.room?.canRematch);
   els.startMatchBtn.classList.toggle("hidden", !showStart);
   els.startMatchBtn.textContent = state.room?.canRematch ? "Revanche starten" : "Match starten";
+  restartTimerLoop();
 }
 
 function render() {
@@ -486,6 +526,24 @@ function maybePlayMotionCue(cue) {
 
   if (cue.type === "disconnect") {
     setAnnouncer("Verbindung unterbrochen");
+    return;
+  }
+
+  if (cue.type === "timeout-turnover") {
+    setAnnouncer("Zeitstrafe");
+    attackerEl?.classList.add("hit");
+    showBubble(cue.attackerSide, "Zu spät!", 1800);
+    showBubble(cue.defenderSide, "Initiative!", 1800);
+    return;
+  }
+
+  if (cue.type === "timeout-hit") {
+    setAnnouncer("Zeit abgelaufen");
+    attackerEl?.classList.add("attacking");
+    defenderEl?.classList.add("hit");
+    flashImpact();
+    showBubble(cue.attackerSide, cue.attackTitle || "Treffer", 2200);
+    showBubble(cue.defenderSide, "Frist verpasst", 2000);
   }
 }
 

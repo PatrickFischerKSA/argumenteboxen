@@ -292,6 +292,41 @@ button {
   font-size: 0.95rem;
 }
 
+.turn-timer {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.turn-timer-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.turn-timer-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.turn-timer-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f6c55d, #ff8d73);
+  transition: width 200ms linear, background 180ms ease;
+}
+
+.turn-timer-fill.warning {
+  background: linear-gradient(90deg, #ff8d73, #dc3f3f);
+}
+
 .arena {
   position: relative;
   min-height: 560px;

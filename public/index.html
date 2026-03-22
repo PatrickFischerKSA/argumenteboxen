@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Argumenteboxen</title>
+    <title>Schlagende Argumente</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <header class="hero">
         <div>
           <p class="eyebrow">Argumentespiel für zwei Computer</p>
-          <h1>Argumenteboxen</h1>
+          <h1>Schlagende Argumente</h1>
           <p class="hero-copy">
             Zwei Kängurus boxen sich mit Pro- und Contra-Argumenten durch die
             Frage: Soll Sport ein Promotionsfach werden?
@@ -62,6 +62,15 @@
             <div class="status-copy">
               <p class="status-line" id="status-line">Warte auf die Arena.</p>
               <p class="prompt-line" id="prompt-line"></p>
+              <div class="turn-timer hidden" id="turn-timer">
+                <div class="turn-timer-meta">
+                  <span>Zugzeit</span>
+                  <strong id="turn-timer-label">30s</strong>
+                </div>
+                <div class="turn-timer-bar">
+                  <div class="turn-timer-fill" id="turn-timer-fill"></div>
+                </div>
+              </div>
             </div>
             <div class="topbar-actions">
               <button id="audio-toggle-btn" class="secondary-btn">Sound aus</button>

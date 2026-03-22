@@ -1,6 +1,6 @@
-# Argumenteboxen
+# Schlagende Argumente
 
-![Argumenteboxen Vorschau](./assets/preview.svg)
+![Schlagende Argumente Vorschau](./assets/preview.svg)
 
 Ein eigenständiges Zwei-Spieler-Argumentespiel für zwei Computer zur Streitfrage:
 
@@ -14,6 +14,7 @@ Zwei Kängurus treten als `Pro` und `Contra` im Ring gegeneinander an. Ein Angri
 - Klare `Pro`- und `Contra`-Argumentkarten aus der Materialsammlung zum Promotionsfach Sport
 - Schnelle Arena-Animationen mit Angriff, Parade, Treffer und KO
 - Schaltbare Browser-Sounds für Glocke, Schläge und Volltreffer
+- 30-Sekunden-Zugtimer für Angriff und Abwehr
 - Revanche im selben Raum ohne neues Setup
 - Integriertes Logikraster mit Schlussarten und Fehlschluss-Prüfung aus dem Dossier zur Argumentationslehre
 - Komplett getrenntes Projekt, nicht mit anderen Workspace-Apps vermischt
@@ -24,13 +25,14 @@ Zwei Kängurus treten als `Pro` und `Contra` im Ring gegeneinander an. Ein Angri
 
 - Valide Abwehr: kein Treffer, Initiative-Wechsel
 - Ungültige Abwehr: Volltreffer
+- Angriff zu spät: Initiative wechselt ohne Treffer
+- Abwehr zu spät: Volltreffer für die angreifende Seite
 - Drei Volltreffer: KO
 
 Damit wird die Debatte nicht nur gesammelt, sondern als kompetitives Argumenteduell inszeniert.
 
 ## Vorschau
 
-- Roter und blauer Känguru-Charakter im Boxring
 - Roter und blauer Känguru-Charakter im Boxring
 - Live-Kampfprotokoll mit Argumenten und Gegenargumenten
 - Trefferanzeige für beide Seiten
@@ -55,10 +57,11 @@ Danach im Browser öffnen:
 3. Die Host-Seite startet das Match.
 4. `Pro` greift mit einer Argumentkarte an.
 5. `Contra` verteidigt mit einer Gegenargumentkarte.
-6. Bei valider Abwehr wechselt die Initiative.
-7. Bei ungültiger Abwehr gibt es einen Treffer.
-8. Nach drei Treffern ist das Match per KO beendet.
-9. Die Host-Seite kann direkt eine Revanche starten.
+6. Jede Aktion muss innerhalb von 30 Sekunden erfolgen.
+7. Bei valider Abwehr wechselt die Initiative.
+8. Bei ungültiger oder verspäteter Abwehr gibt es einen Treffer.
+9. Nach drei Treffern ist das Match per KO beendet.
+10. Die Host-Seite kann direkt eine Revanche starten.
 
 ## Inhaltliche Grundlage
 
@@ -134,3 +137,4 @@ Das Projekt eignet sich besonders für:
 ## Entwicklung
 
 Das Repository ist bereits auf GitHub und kann direkt als eigenständiges Projekt weiterentwickelt oder auf Render deployt werden.
+Der Repo-Name `argumenteboxen` bleibt dabei bewusst unverändert; umbenannt wurde nur der sichtbare Spieltitel.
