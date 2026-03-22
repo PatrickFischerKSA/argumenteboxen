@@ -4,6 +4,7 @@ const state = {
   selectedCardId: null,
   lastCueId: null,
   timerInterval: null,
+  motionResetTimer: null,
   audioEnabled: false,
   audioCtx: null,
   masterGain: null,
@@ -444,9 +445,19 @@ function render() {
 }
 
 function clearMotionClasses() {
+  window.clearTimeout(state.motionResetTimer);
+  state.motionResetTimer = null;
   [els.fighterPro, els.fighterContra].forEach((fighter) => {
     fighter.classList.remove("attacking", "blocking", "hit", "ko");
   });
+}
+
+function scheduleMotionReset(duration = 560) {
+  window.clearTimeout(state.motionResetTimer);
+  state.motionResetTimer = window.setTimeout(() => {
+    state.motionResetTimer = null;
+    clearMotionClasses();
+  }, duration);
 }
 
 function flashImpact() {
@@ -493,6 +504,7 @@ function maybePlayMotionCue(cue) {
     attackerEl?.classList.add("attacking");
     defenderEl?.classList.add("blocking");
     showBubble(cue.attackerSide, cue.attackTitle, 2400);
+    scheduleMotionReset(520);
     return;
   }
 
@@ -501,6 +513,7 @@ function maybePlayMotionCue(cue) {
     defenderEl?.classList.add("attacking");
     attackerEl?.classList.add("blocking");
     showBubble(cue.defenderSide, cue.defenseTitle, 2500);
+    scheduleMotionReset(560);
     return;
   }
 
@@ -511,6 +524,7 @@ function maybePlayMotionCue(cue) {
     flashImpact();
     showBubble(cue.attackerSide, cue.attackTitle, 2600);
     showBubble(cue.defenderSide, `${cue.defenseTitle} war nicht genug`, 2200);
+    scheduleMotionReset(680);
     return;
   }
 
@@ -526,6 +540,7 @@ function maybePlayMotionCue(cue) {
 
   if (cue.type === "disconnect") {
     setAnnouncer("Verbindung unterbrochen");
+    clearMotionClasses();
     return;
   }
 
@@ -534,6 +549,7 @@ function maybePlayMotionCue(cue) {
     attackerEl?.classList.add("hit");
     showBubble(cue.attackerSide, "Zu spät!", 1800);
     showBubble(cue.defenderSide, "Initiative!", 1800);
+    scheduleMotionReset(620);
     return;
   }
 
@@ -544,6 +560,7 @@ function maybePlayMotionCue(cue) {
     flashImpact();
     showBubble(cue.attackerSide, cue.attackTitle || "Treffer", 2200);
     showBubble(cue.defenderSide, "Frist verpasst", 2000);
+    scheduleMotionReset(680);
   }
 }
 

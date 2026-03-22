@@ -80,7 +80,9 @@
 
           <div class="arena" id="arena">
             <div class="arena-lights"></div>
-            <div class="arena-impact" id="arena-impact"></div>
+            <div class="arena-impact" id="arena-impact" aria-hidden="true">
+              <img src="./assets/sprites/effect_pow.png" alt="" />
+            </div>
             <div class="arena-announcer" id="arena-announcer">Arena bereit</div>
 
             <div class="fighter pro" id="fighter-pro">
@@ -89,47 +91,12 @@
                 <strong id="fighter-pro-name">Känguru Rot</strong>
               </div>
               <div class="speech-bubble" id="bubble-pro"></div>
-              <div class="roo-art">
-                <svg viewBox="0 0 260 310" aria-hidden="true">
-                  <ellipse class="shadow" cx="130" cy="286" rx="76" ry="18" />
-                  <path
-                    class="tail"
-                    d="M70 220 C28 206, 16 162, 50 148 C94 130, 122 184, 108 226"
-                  />
-                  <g class="back-leg">
-                    <ellipse class="leg" cx="92" cy="242" rx="20" ry="56" />
-                    <ellipse class="foot" cx="84" cy="288" rx="34" ry="12" />
-                  </g>
-                  <g class="body">
-                    <ellipse class="torso" cx="130" cy="162" rx="64" ry="82" />
-                    <ellipse class="belly" cx="134" cy="177" rx="36" ry="54" />
-                    <path class="shorts" d="M82 182 L178 182 L168 230 L94 230 Z" />
-                    <path class="waistband" d="M86 178 L174 178 L170 194 L90 194 Z" />
-                  </g>
-                  <g class="front-leg">
-                    <ellipse class="leg" cx="158" cy="245" rx="20" ry="58" />
-                    <ellipse class="foot" cx="171" cy="288" rx="34" ry="12" />
-                  </g>
-                  <g class="head">
-                    <path class="ear ear-back" d="M122 42 C128 10, 152 10, 158 46 Z" />
-                    <path class="ear ear-front" d="M156 44 C162 10, 190 14, 194 54 Z" />
-                    <ellipse class="helmet" cx="151" cy="78" rx="58" ry="38" />
-                    <ellipse class="face" cx="150" cy="94" rx="52" ry="48" />
-                    <ellipse class="muzzle" cx="170" cy="108" rx="30" ry="18" />
-                    <ellipse class="nose" cx="190" cy="104" rx="10" ry="7" />
-                    <circle class="eye" cx="165" cy="82" r="6" />
-                    <path class="brow" d="M154 76 Q168 64 180 74" />
-                    <path class="mouth" d="M170 119 Q182 129 191 118" />
-                  </g>
-                  <g class="arm back-arm">
-                    <path class="arm-shape" d="M102 128 C80 138, 76 176, 96 196 L116 184 C104 170, 104 148, 118 138 Z" />
-                    <ellipse class="glove" cx="102" cy="198" rx="26" ry="22" />
-                  </g>
-                  <g class="arm front-arm">
-                    <path class="arm-shape" d="M146 130 C166 128, 190 144, 196 168 L176 178 C170 158, 158 144, 144 142 Z" />
-                    <ellipse class="glove" cx="196" cy="180" rx="28" ry="24" />
-                  </g>
-                </svg>
+              <div class="roo-art" aria-hidden="true">
+                <div class="sprite-stack">
+                  <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_red_idle.png" alt="" />
+                  <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_red_punch.png" alt="" />
+                  <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_red_hit.png" alt="" />
+                </div>
               </div>
               <div class="hit-track" id="hit-track-pro"></div>
             </div>
@@ -148,47 +115,12 @@
                 <strong id="fighter-contra-name">Känguru Blau</strong>
               </div>
               <div class="speech-bubble" id="bubble-contra"></div>
-              <div class="roo-art">
-                <svg viewBox="0 0 260 310" aria-hidden="true">
-                  <ellipse class="shadow" cx="130" cy="286" rx="76" ry="18" />
-                  <path
-                    class="tail"
-                    d="M70 220 C28 206, 16 162, 50 148 C94 130, 122 184, 108 226"
-                  />
-                  <g class="back-leg">
-                    <ellipse class="leg" cx="92" cy="242" rx="20" ry="56" />
-                    <ellipse class="foot" cx="84" cy="288" rx="34" ry="12" />
-                  </g>
-                  <g class="body">
-                    <ellipse class="torso" cx="130" cy="162" rx="64" ry="82" />
-                    <ellipse class="belly" cx="134" cy="177" rx="36" ry="54" />
-                    <path class="shorts" d="M82 182 L178 182 L168 230 L94 230 Z" />
-                    <path class="waistband" d="M86 178 L174 178 L170 194 L90 194 Z" />
-                  </g>
-                  <g class="front-leg">
-                    <ellipse class="leg" cx="158" cy="245" rx="20" ry="58" />
-                    <ellipse class="foot" cx="171" cy="288" rx="34" ry="12" />
-                  </g>
-                  <g class="head">
-                    <path class="ear ear-back" d="M122 42 C128 10, 152 10, 158 46 Z" />
-                    <path class="ear ear-front" d="M156 44 C162 10, 190 14, 194 54 Z" />
-                    <ellipse class="helmet" cx="151" cy="78" rx="58" ry="38" />
-                    <ellipse class="face" cx="150" cy="94" rx="52" ry="48" />
-                    <ellipse class="muzzle" cx="170" cy="108" rx="30" ry="18" />
-                    <ellipse class="nose" cx="190" cy="104" rx="10" ry="7" />
-                    <circle class="eye" cx="165" cy="82" r="6" />
-                    <path class="brow" d="M154 76 Q168 64 180 74" />
-                    <path class="mouth" d="M170 119 Q182 129 191 118" />
-                  </g>
-                  <g class="arm back-arm">
-                    <path class="arm-shape" d="M102 128 C80 138, 76 176, 96 196 L116 184 C104 170, 104 148, 118 138 Z" />
-                    <ellipse class="glove" cx="102" cy="198" rx="26" ry="22" />
-                  </g>
-                  <g class="arm front-arm">
-                    <path class="arm-shape" d="M146 130 C166 128, 190 144, 196 168 L176 178 C170 158, 158 144, 144 142 Z" />
-                    <ellipse class="glove" cx="196" cy="180" rx="28" ry="24" />
-                  </g>
-                </svg>
+              <div class="roo-art" aria-hidden="true">
+                <div class="sprite-stack">
+                  <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_blue_idle.png" alt="" />
+                  <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_blue_punch.png" alt="" />
+                  <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_blue_hit.png" alt="" />
+                </div>
               </div>
               <div class="hit-track" id="hit-track-contra"></div>
             </div>

@@ -334,58 +334,72 @@ button {
   overflow: hidden;
   padding: 24px;
   background:
-    radial-gradient(circle at 50% 8%, rgba(255, 249, 219, 0.34), transparent 18%),
-    radial-gradient(circle at 14% 16%, rgba(255, 217, 159, 0.26), transparent 14%),
-    radial-gradient(circle at 86% 18%, rgba(174, 214, 255, 0.22), transparent 16%),
-    linear-gradient(180deg, rgba(4, 12, 24, 0.92), rgba(4, 8, 14, 0.98));
+    radial-gradient(circle at 50% 6%, rgba(255, 252, 233, 0.22), transparent 18%),
+    linear-gradient(180deg, rgba(5, 12, 24, 0.82), rgba(3, 8, 14, 0.96));
   border: 1px solid rgba(255, 255, 255, 0.08);
+  isolation: isolate;
 }
 
 .arena::before,
 .arena::after {
   content: "";
   position: absolute;
-  inset: auto 0 66px;
-  height: 14px;
-  background:
-    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.85) 18%, rgba(255, 255, 255, 0.72) 82%, transparent 100%);
-  box-shadow:
-    0 -52px 0 rgba(236, 68, 68, 0.7),
-    0 -22px 0 rgba(255, 255, 255, 0.82);
-  opacity: 0.9;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arena::before {
+  background: url("./assets/sprites/background_ring.png") center bottom / cover no-repeat;
+  box-shadow: none;
+  opacity: 0.96;
+  z-index: 0;
 }
 
 .arena::after {
-  inset: auto 0 28px;
-  box-shadow: none;
-  height: 180px;
   background:
-    radial-gradient(ellipse at center, rgba(245, 223, 184, 0.92) 0%, rgba(221, 180, 123, 0.92) 40%, rgba(105, 76, 44, 0.9) 100%);
-  border-top: 5px solid rgba(255, 255, 255, 0.18);
+    radial-gradient(circle at 50% 10%, rgba(255, 244, 210, 0.22), transparent 22%),
+    linear-gradient(180deg, rgba(2, 8, 18, 0.08), rgba(2, 8, 18, 0.48));
+  z-index: 1;
 }
 
 .arena-lights {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 8%, rgba(255, 245, 216, 0.36), transparent 10%),
-    radial-gradient(circle at 50% 4%, rgba(255, 255, 255, 0.42), transparent 12%),
-    radial-gradient(circle at 82% 10%, rgba(225, 239, 255, 0.28), transparent 10%);
+    radial-gradient(circle at 16% 8%, rgba(255, 244, 204, 0.26), transparent 11%),
+    radial-gradient(circle at 50% 4%, rgba(255, 255, 255, 0.28), transparent 13%),
+    radial-gradient(circle at 84% 8%, rgba(221, 238, 255, 0.2), transparent 11%);
   pointer-events: none;
+  z-index: 2;
 }
 
 .arena-impact {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   opacity: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at center, rgba(255, 232, 171, 0.58), transparent 12%),
-    radial-gradient(circle at center, rgba(255, 112, 80, 0.36), transparent 24%);
+    radial-gradient(circle at center, rgba(255, 235, 177, 0.28), transparent 16%),
+    radial-gradient(circle at center, rgba(255, 121, 89, 0.18), transparent 28%);
+  z-index: 4;
+}
+
+.arena-impact img {
+  width: clamp(110px, 12vw, 180px);
+  height: auto;
+  opacity: 0;
+  transform: scale(0.25) rotate(-8deg);
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.38));
 }
 
 .arena-impact.live {
   animation: impactFlash 460ms ease-out;
+}
+
+.arena-impact.live img {
+  animation: powBurst 460ms cubic-bezier(0.18, 0.8, 0.24, 1) both;
 }
 
 .arena-announcer {
@@ -402,47 +416,26 @@ button {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--gold);
+  z-index: 5;
 }
 
 .fighter {
   position: absolute;
-  bottom: 84px;
-  width: clamp(260px, 30vw, 400px);
+  bottom: 72px;
+  width: clamp(300px, 31vw, 440px);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   z-index: 3;
-  animation: stanceBob 1.35s ease-in-out infinite alternate;
   transition: transform 260ms ease, filter 220ms ease, opacity 220ms ease;
 }
 
 .fighter.pro {
-  left: 14px;
-  --glove: var(--pro-main);
-  --glove-dark: var(--pro-dark);
-  --helmet: #cc2529;
-  --helmet-shadow: #8d1012;
-  --trim: #ffffff;
-  --fur: #b46b2d;
-  --fur-dark: #6f3e17;
-  --belly: #f5e1bd;
-  --ink: #23150d;
+  left: 10px;
 }
 
 .fighter.contra {
-  right: 14px;
-  --glove: var(--contra-main);
-  --glove-dark: var(--contra-dark);
-  --helmet: #2670dd;
-  --helmet-shadow: #103d84;
-  --trim: #ffffff;
-  --fur: #cf8b33;
-  --fur-dark: #7d4d13;
-  --belly: #f8e5b5;
-  --ink: #241507;
-}
-
-.fighter.contra .roo-art {
-  transform: scaleX(-1);
+  right: 10px;
+  justify-items: end;
 }
 
 .fighter-banner {
@@ -480,17 +473,18 @@ button {
 }
 
 .speech-bubble {
-  min-height: 56px;
-  max-width: 260px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(10, 16, 28, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 58px;
+  max-width: 280px;
+  padding: 12px 16px;
+  border-radius: 22px;
+  background: rgba(10, 16, 28, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   line-height: 1.35;
   color: var(--text);
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 180ms ease, transform 180ms ease;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
 }
 
 .speech-bubble.live {
@@ -498,119 +492,114 @@ button {
   transform: translateY(0);
 }
 
+.fighter.contra .speech-bubble,
+.fighter.contra .fighter-banner,
+.fighter.contra .hit-track {
+  justify-self: end;
+  text-align: right;
+}
+
 .roo-art {
+  position: relative;
   width: 100%;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.3));
+  min-height: clamp(320px, 35vw, 470px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.34));
+  animation: stanceBobSprite 1.05s ease-in-out infinite alternate;
+  will-change: transform, filter;
 }
 
-.roo-art svg {
+.roo-art::after {
+  content: "";
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  bottom: 8px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(8, 11, 18, 0.28);
+  filter: blur(10px);
+  z-index: 0;
+}
+
+.sprite-stack {
+  position: relative;
   width: 100%;
-  height: auto;
-  overflow: visible;
+  aspect-ratio: 1 / 1;
+  z-index: 1;
 }
 
-.fighter svg .shadow {
-  fill: rgba(0, 0, 0, 0.22);
+.roo-sprite {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 100ms linear;
 }
 
-.fighter svg .tail,
-.fighter svg .leg,
-.fighter svg .torso,
-.fighter svg .face,
-.fighter svg .arm-shape,
-.fighter svg .ear {
-  fill: var(--fur);
-  stroke: var(--fur-dark);
-  stroke-width: 4;
-}
-
-.fighter svg .belly,
-.fighter svg .muzzle {
-  fill: var(--belly);
-  stroke: rgba(111, 62, 23, 0.4);
-  stroke-width: 3;
-}
-
-.fighter svg .helmet,
-.fighter svg .waistband {
-  fill: var(--helmet);
-  stroke: var(--helmet-shadow);
-  stroke-width: 4;
-}
-
-.fighter svg .shorts {
-  fill: var(--glove);
-  stroke: var(--glove-dark);
-  stroke-width: 4;
-}
-
-.fighter svg .glove {
-  fill: var(--glove);
-  stroke: var(--glove-dark);
-  stroke-width: 4;
-}
-
-.fighter svg .foot {
-  fill: #2d180f;
-  opacity: 0.92;
-}
-
-.fighter svg .nose,
-.fighter svg .eye,
-.fighter svg .brow,
-.fighter svg .mouth {
-  fill: none;
-  stroke: var(--ink);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 4;
-}
-
-.fighter svg .eye {
-  fill: var(--ink);
-  stroke-width: 0;
-}
-
-.fighter .front-arm,
-.fighter .head,
-.fighter .front-leg,
-.fighter .tail {
-  transform-box: fill-box;
-  transform-origin: center;
+.fighter:not(.attacking):not(.hit):not(.ko) .sprite-idle,
+.fighter.blocking:not(.hit):not(.ko) .sprite-idle {
+  opacity: 1;
 }
 
 .fighter.active-turn {
-  filter: saturate(1.08) brightness(1.05);
+  filter: none;
 }
 
-.fighter.attacking {
-  animation: dashIn 460ms cubic-bezier(0.18, 0.78, 0.2, 1) both;
+.fighter.active-turn .roo-art {
+  filter:
+    saturate(1.08)
+    brightness(1.05)
+    drop-shadow(0 24px 34px rgba(0, 0, 0, 0.42));
 }
 
-.fighter.attacking .front-arm {
-  animation: jab 460ms cubic-bezier(0.18, 0.78, 0.2, 1);
+.fighter.attacking .roo-art {
+  animation: dashInSprite 360ms cubic-bezier(0.18, 0.8, 0.2, 1) both;
 }
 
-.fighter.blocking .front-arm {
-  animation: guard 420ms ease-out;
+.fighter.contra.attacking .roo-art {
+  animation-name: dashInSpriteContra;
 }
 
-.fighter.hit {
-  animation: recoil 460ms cubic-bezier(0.15, 0.78, 0.3, 1) both;
+.fighter.attacking .sprite-punch {
+  opacity: 1;
 }
 
-.fighter.hit .head {
-  animation: headSnap 420ms ease-out;
+.fighter.blocking .roo-art {
+  animation: guardSprite 320ms ease-out both;
 }
 
-.fighter.ko {
-  animation: collapse 860ms cubic-bezier(0.18, 0.8, 0.18, 1) forwards;
-  filter: saturate(0.75) brightness(0.92);
+.fighter.hit .roo-art {
+  animation: recoilSprite 420ms cubic-bezier(0.15, 0.8, 0.28, 1) both;
 }
 
-.fighter.ko .front-leg,
-.fighter.ko .back-leg {
-  animation: buckle 700ms ease-out forwards;
+.fighter.contra.hit .roo-art {
+  animation-name: recoilSpriteContra;
+}
+
+.fighter.hit .sprite-hit,
+.fighter.ko .sprite-hit {
+  opacity: 1;
+}
+
+.fighter.ko .roo-art {
+  animation: collapseSprite 780ms cubic-bezier(0.18, 0.8, 0.18, 1) forwards;
+  filter:
+    saturate(0.86)
+    brightness(0.96)
+    drop-shadow(0 28px 36px rgba(0, 0, 0, 0.4));
+}
+
+.fighter.contra.ko .roo-art {
+  animation-name: collapseSpriteContra;
 }
 
 .arena-center {
@@ -644,6 +633,7 @@ button {
 .hit-track {
   display: flex;
   gap: 10px;
+  z-index: 5;
 }
 
 .hit-pip {
@@ -997,6 +987,114 @@ button {
   }
 }
 
+@keyframes powBurst {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(-10deg);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18) rotate(8deg);
+  }
+}
+
+@keyframes stanceBobSprite {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes dashInSprite {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  38% {
+    transform: translateX(32px) translateY(-3px) scale(1.03);
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes dashInSpriteContra {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  38% {
+    transform: translateX(-32px) translateY(-3px) scale(1.03);
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes guardSprite {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-10px) scale(0.985);
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes recoilSprite {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  32% {
+    transform: translateX(-22px) rotate(-6deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes recoilSpriteContra {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  32% {
+    transform: translateX(22px) rotate(6deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes collapseSprite {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  44% {
+    transform: translate(14px, 16px) rotate(8deg);
+  }
+  100% {
+    transform: translate(24px, 102px) rotate(74deg);
+  }
+}
+
+@keyframes collapseSpriteContra {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  44% {
+    transform: translate(-14px, 16px) rotate(-8deg);
+  }
+  100% {
+    transform: translate(-24px, 102px) rotate(-74deg);
+  }
+}
+
 @media (max-width: 1240px) {
   .layout {
     grid-template-columns: 1fr;
@@ -1028,7 +1126,11 @@ button {
   }
 
   .fighter {
-    width: min(320px, 48vw);
+    width: min(348px, 48vw);
+  }
+
+  .roo-art {
+    min-height: min(42vw, 430px);
   }
 
   .fighter.pro {
@@ -1058,9 +1160,13 @@ button {
   .fighter {
     position: relative;
     inset: auto;
-    width: min(100%, 340px);
+    width: min(100%, 360px);
     margin: 0 auto;
     bottom: auto;
+  }
+
+  .roo-art {
+    min-height: min(84vw, 400px);
   }
 
   .arena-center {
@@ -1071,10 +1177,6 @@ button {
     width: 100%;
     display: flex;
     justify-content: center;
-  }
-
-  .arena::after {
-    height: 140px;
   }
 
   .sidebar {

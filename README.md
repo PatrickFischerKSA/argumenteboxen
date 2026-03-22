@@ -86,7 +86,7 @@ Das Raster prüft:
 - `Express`
 - `ws` für Echtzeit-Kommunikation per WebSocket
 - Vanilla HTML, CSS und JavaScript
-- Integrierte SVG-Figuren statt externer Grafik-Abhängigkeiten
+- Integrierte Sprite-Arena mit externem Känguru-Boxing-Grafikset
 
 ## Plattform
 
