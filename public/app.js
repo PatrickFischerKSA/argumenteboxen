@@ -15,6 +15,13 @@ const state = {
   masterGain: null,
   compressor: null,
   noiseBuffer: null,
+  crowdSource: null,
+  crowdFilter: null,
+  crowdGain: null,
+  crowdLfo: null,
+  crowdLfoGain: null,
+  crowdHissSource: null,
+  crowdHissGain: null,
   bubbleTimers: {
     pro: null,
     contra: null
@@ -189,6 +196,7 @@ function connect() {
   });
 
   state.ws.addEventListener("close", () => {
+    stopCrowdAmbience();
     showNotice("Verbindung getrennt. Die Seite verbindet sich neu.", "error");
     window.setTimeout(connect, 1200);
   });
@@ -243,6 +251,123 @@ function primeArenaAudio() {
   }
 
   return true;
+}
+
+function stopCrowdAmbience() {
+  if (state.crowdSource) {
+    try {
+      state.crowdSource.stop();
+    } catch (error) {}
+    state.crowdSource.disconnect();
+    state.crowdSource = null;
+  }
+
+  if (state.crowdHissSource) {
+    try {
+      state.crowdHissSource.stop();
+    } catch (error) {}
+    state.crowdHissSource.disconnect();
+    state.crowdHissSource = null;
+  }
+
+  if (state.crowdLfo) {
+    try {
+      state.crowdLfo.stop();
+    } catch (error) {}
+    state.crowdLfo.disconnect();
+    state.crowdLfo = null;
+  }
+
+  if (state.crowdLfoGain) {
+    state.crowdLfoGain.disconnect();
+    state.crowdLfoGain = null;
+  }
+
+  if (state.crowdFilter) {
+    state.crowdFilter.disconnect();
+    state.crowdFilter = null;
+  }
+
+  if (state.crowdGain) {
+    state.crowdGain.disconnect();
+    state.crowdGain = null;
+  }
+
+  if (state.crowdHissGain) {
+    state.crowdHissGain.disconnect();
+    state.crowdHissGain = null;
+  }
+}
+
+function startCrowdAmbience() {
+  if (!state.audioEnabled || !ensureAudio() || state.crowdSource || !state.noiseBuffer) {
+    return;
+  }
+
+  const now = state.audioCtx.currentTime;
+
+  state.crowdSource = state.audioCtx.createBufferSource();
+  state.crowdSource.buffer = state.noiseBuffer;
+  state.crowdSource.loop = true;
+
+  state.crowdFilter = state.audioCtx.createBiquadFilter();
+  state.crowdFilter.type = "bandpass";
+  state.crowdFilter.frequency.setValueAtTime(460, now);
+  state.crowdFilter.Q.setValueAtTime(0.45, now);
+
+  state.crowdGain = state.audioCtx.createGain();
+  state.crowdGain.gain.setValueAtTime(0.022, now);
+
+  state.crowdLfo = state.audioCtx.createOscillator();
+  state.crowdLfo.type = "sine";
+  state.crowdLfo.frequency.setValueAtTime(0.22, now);
+
+  state.crowdLfoGain = state.audioCtx.createGain();
+  state.crowdLfoGain.gain.setValueAtTime(0.012, now);
+
+  state.crowdHissSource = state.audioCtx.createBufferSource();
+  state.crowdHissSource.buffer = state.noiseBuffer;
+  state.crowdHissSource.loop = true;
+
+  const hissHighpass = state.audioCtx.createBiquadFilter();
+  hissHighpass.type = "highpass";
+  hissHighpass.frequency.setValueAtTime(1800, now);
+
+  const hissLowpass = state.audioCtx.createBiquadFilter();
+  hissLowpass.type = "lowpass";
+  hissLowpass.frequency.setValueAtTime(5200, now);
+
+  state.crowdHissGain = state.audioCtx.createGain();
+  state.crowdHissGain.gain.setValueAtTime(0.008, now);
+
+  state.crowdLfo.connect(state.crowdLfoGain);
+  state.crowdLfoGain.connect(state.crowdGain.gain);
+
+  state.crowdSource.connect(state.crowdFilter);
+  state.crowdFilter.connect(state.crowdGain);
+  state.crowdGain.connect(state.masterGain);
+
+  state.crowdHissSource.connect(hissHighpass);
+  hissHighpass.connect(hissLowpass);
+  hissLowpass.connect(state.crowdHissGain);
+  state.crowdHissGain.connect(state.masterGain);
+
+  state.crowdSource.start(now);
+  state.crowdHissSource.start(now);
+  state.crowdLfo.start(now);
+}
+
+function syncArenaAmbience() {
+  if (
+    state.audioEnabled &&
+    state.room &&
+    (state.room.status === "active" || state.room.status === "finished")
+  ) {
+    startCrowdAmbience();
+    return;
+  }
+
+  stopCrowdAmbience();
 }
 
 function createNoiseBuffer(audioCtx) {
@@ -429,6 +554,24 @@ function playKoSound() {
   }, 120);
 }
 
+function playCrowdRoar({ gain = 0.2, duration = 0.9, highpass = 180, lowpass = 3200 } = {}) {
+  playNoiseBurst({
+    duration,
+    gain,
+    highpass,
+    lowpass,
+    attack: 0.01,
+    release: duration * 0.8
+  });
+}
+
+function playCrowdCheer() {
+  playCrowdRoar({ gain: 0.14, duration: 0.55, highpass: 260, lowpass: 3600 });
+  window.setTimeout(() => {
+    pulseTone({ frequency: 760, duration: 0.16, type: "triangle", gain: 0.08 });
+  }, 80);
+}
+
 function playCueSound(cue) {
   if (!cue || !state.audioEnabled) {
     return;
@@ -436,6 +579,9 @@ function playCueSound(cue) {
 
   if (cue.type === "match-start") {
     playGongSound();
+    window.setTimeout(() => {
+      playCrowdRoar({ gain: 0.18, duration: 0.8, highpass: 220, lowpass: 3000 });
+    }, 120);
     return;
   }
 
@@ -454,6 +600,9 @@ function playCueSound(cue) {
     window.setTimeout(() => {
       playPainSound();
     }, 55);
+    window.setTimeout(() => {
+      playCrowdCheer();
+    }, 90);
     return;
   }
 
@@ -465,6 +614,9 @@ function playCueSound(cue) {
 
   if (cue.type === "ko") {
     playKoSound();
+    window.setTimeout(() => {
+      playCrowdRoar({ gain: 0.28, duration: 1.4, highpass: 160, lowpass: 2600 });
+    }, 120);
   }
 }
 
@@ -1095,6 +1247,7 @@ function render() {
   renderHistory();
   renderLogicPanel();
   renderInfoPanels();
+  syncArenaAmbience();
 }
 
 function clearMotionClasses() {
@@ -1282,6 +1435,7 @@ els.audioToggleBtn.addEventListener("click", () => {
   }
 
   updateAudioButton();
+  syncArenaAmbience();
 });
 
 els.matchModeSelect.addEventListener("change", updateSetupOptions);
