@@ -34,6 +34,8 @@ const els = {
   textMoveLabel: document.getElementById("text-move-label"),
   textCharCount: document.getElementById("text-char-count"),
   textModePanel: document.getElementById("text-mode-panel"),
+  demoModePanel: document.getElementById("demo-mode-panel"),
+  demoBrief: document.getElementById("demo-brief"),
   cardsModePanel: document.getElementById("cards-mode-panel"),
   ideasGrid: document.getElementById("ideas-grid"),
   modeChip: document.getElementById("mode-chip"),
@@ -84,6 +86,12 @@ function currentConfiguredTurnMs() {
 }
 
 function setupNoticeText() {
+  if (els.matchModeSelect.value === "demo") {
+    return els.playLevelSelect.value === "free_text"
+      ? "Im Demo-Modus laufen beide Seiten automatisch. Im Freitext-Level erklärt die Demo, wie Angriffe und Gegenargumente logisch bewertet werden."
+      : "Im Demo-Modus laufen beide Seiten automatisch. Die Demo kommentiert Angriff, Abwehr, Volltreffer und Initiative-Wechsel live mit.";
+  }
+
   if (els.matchModeSelect.value === "solo") {
     return els.playLevelSelect.value === "free_text"
       ? "Im Solo-Modus spielt ein Computer direkt gegen dich. Im Freitext-Level formuliert ihr Argumente mit je 90 Sekunden Zugzeit."
@@ -96,8 +104,8 @@ function setupNoticeText() {
 }
 
 function updateSetupOptions() {
-  const solo = els.matchModeSelect.value === "solo";
-  els.joinBox.classList.toggle("hidden", solo);
+  const oneDeviceMode = els.matchModeSelect.value === "solo" || els.matchModeSelect.value === "demo";
+  els.joinBox.classList.toggle("hidden", oneDeviceMode);
   showNotice(setupNoticeText(), "success");
   clearTimerDisplay();
 }
@@ -316,10 +324,15 @@ function playerBySide(side) {
 function canAct() {
   return Boolean(
     state.room &&
+      state.room.matchMode !== "demo" &&
       state.room.status === "active" &&
       state.room.user &&
       state.room.activePlayerId === state.room.user.id
   );
+}
+
+function isDemoMode() {
+  return state.room?.matchMode === "demo" || els.matchModeSelect.value === "demo";
 }
 
 function isFreeTextLevel() {
@@ -328,7 +341,15 @@ function isFreeTextLevel() {
 
 function currentActionLabel() {
   if (!state.room || !state.room.user) {
+    if (els.matchModeSelect.value === "demo") {
+      return "Der Demo-Modus führt das ganze Match automatisch vor und kommentiert jeden Schritt.";
+    }
+
     return "Wähle einen Modus und tritt der Arena bei.";
+  }
+
+  if (state.room.matchMode === "demo") {
+    return "Der Demo-Modus spielt das ganze Match automatisch und erklärt jeden Schritt.";
   }
 
   if (state.room.status !== "active") {
@@ -447,6 +468,42 @@ function renderIdeas(cards) {
     .join("");
 }
 
+function renderDemoPanel() {
+  const narration = state.room?.demoNarration;
+  const latestHistory = (state.room?.history || [])
+    .slice()
+    .reverse()
+    .slice(0, 3);
+
+  const historyMarkup = latestHistory.length
+    ? latestHistory
+        .map(
+          (item) => `
+            <article class="demo-history-item">
+              <strong>${escapeHtml(item.headline || "Arena-Update")}</strong>
+              <p>${escapeHtml(item.body || "")}</p>
+            </article>
+          `
+        )
+        .join("")
+    : "<p class='history-empty'>Sobald die Demo startet, erscheinen hier die erklärten Schlagwechsel.</p>";
+
+  els.demoBrief.innerHTML = `
+    <article class="demo-spotlight">
+      <p class="eyebrow">Demo-Erklärung</p>
+      <h3>${escapeHtml(narration?.title || "Showkampf bereit")}</h3>
+      <p>${escapeHtml(narration?.body || "Starte den Demo-Modus. Danach laufen beide Seiten automatisch durch ein ganzes Match.")}</p>
+    </article>
+    <div class="demo-history">
+      <div class="panel-heading compact">
+        <h2>Letzte Demo-Schritte</h2>
+        <p>Die Demo kommentiert jeden Schlagwechsel kurz und klar.</p>
+      </div>
+      <div class="demo-history-list">${historyMarkup}</div>
+    </div>
+  `;
+}
+
 function sendSelectedCard(cardId) {
   ensureAudio();
   if (!cardId) {
@@ -552,10 +609,18 @@ function renderCards() {
   const originalCards = state.room?.yourHand || [];
   els.handCaption.textContent = currentActionLabel();
   const textLevel = isFreeTextLevel();
+  const demoMode = isDemoMode();
 
-  els.cardsModePanel.classList.toggle("hidden", textLevel);
-  els.textModePanel.classList.toggle("hidden", !textLevel);
-  els.actionPanelTitle.textContent = textLevel ? "Dein Textzug" : "Deine Karten";
+  els.cardsModePanel.classList.toggle("hidden", textLevel || demoMode);
+  els.textModePanel.classList.toggle("hidden", !textLevel || demoMode);
+  els.demoModePanel.classList.toggle("hidden", !demoMode);
+  els.actionPanelTitle.textContent = demoMode ? "Demo-Ablauf" : textLevel ? "Dein Textzug" : "Deine Karten";
+
+  if (demoMode) {
+    els.selectedCardPanel.innerHTML = "";
+    renderDemoPanel();
+    return;
+  }
 
   if (textLevel) {
     els.selectedCardPanel.innerHTML = "";
@@ -759,7 +824,12 @@ function renderRoomMeta() {
   const matchMode = state.room?.matchMode || els.matchModeSelect.value;
   const playLevel = state.room?.playLevel || els.playLevelSelect.value;
   const modeText = playLevel === "free_text" ? "Level 2: Freitextduell" : "Level 1: Kartenkampf";
-  const opponentText = matchMode === "solo" ? "Solo gegen Computer" : "Duell auf zwei Computern";
+  const opponentText =
+    matchMode === "demo"
+      ? "Demo-Modus"
+      : matchMode === "solo"
+        ? "Solo gegen Computer"
+        : "Duell auf zwei Computern";
 
   els.modeChip.textContent = modeText;
   els.opponentChip.textContent = opponentText;
@@ -801,15 +871,22 @@ function renderStartOverlay() {
   }
 
   if (room.status === "lobby") {
-    eyebrow = room.matchMode === "solo" ? "Solo-Modus" : "Vor dem Kampf";
+    eyebrow = room.matchMode === "demo" ? "Demo-Modus" : room.matchMode === "solo" ? "Solo-Modus" : "Vor dem Kampf";
 
     if (room.canStart) {
-      title = room.matchMode === "solo" ? "Computer ist bereit" : "Beide Kängurus sind bereit";
+      title =
+        room.matchMode === "demo"
+          ? "Demo ist bereit"
+          : room.matchMode === "solo"
+            ? "Computer ist bereit"
+            : "Beide Kängurus sind bereit";
       copy =
-        room.matchMode === "solo"
+        room.matchMode === "demo"
+          ? "Starte jetzt den Demo-Modus. Danach spielen beide Seiten das ganze Match automatisch durch, und die Arena erklärt jeden Schritt."
+          : room.matchMode === "solo"
           ? "Du hast den Raum angelegt, die Gegenseite wird vom Computer übernommen. Starte den Kampf jetzt bewusst mit dem großen Startsignal."
           : "Der Raum ist vollständig. Starte den Kampf jetzt bewusst mit dem großen Startsignal, damit beide Seiten denselben klaren Beginn erleben.";
-      buttonText = "Kampf starten";
+      buttonText = room.matchMode === "demo" ? "Demo starten" : "Kampf starten";
       showButton = true;
     } else if (room.players?.length < 2) {
       title = "Warte auf die Gegenseite";

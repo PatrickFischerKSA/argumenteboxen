@@ -23,6 +23,8 @@ const CARD_TURN_TIME_MS = 30_000;
 const TEXT_TURN_TIME_MS = 90_000;
 const BOT_DELAY_MIN_MS = 900;
 const BOT_DELAY_MAX_MS = 1700;
+const DEMO_DELAY_MIN_MS = 380;
+const DEMO_DELAY_MAX_MS = 760;
 
 const app = express();
 const server = http.createServer(app);
@@ -43,7 +45,7 @@ function sanitizeName(input, fallback) {
 }
 
 function sanitizeMatchMode(input) {
-  return input === "solo" ? "solo" : "duel";
+  return input === "solo" || input === "demo" ? input : "duel";
 }
 
 function sanitizePlayLevel(input) {
@@ -65,7 +67,11 @@ function makeRoomCode() {
   }
 }
 
-function randomDelay() {
+function randomDelay(room) {
+  if (room?.matchMode === "demo") {
+    return crypto.randomInt(DEMO_DELAY_MIN_MS, DEMO_DELAY_MAX_MS + 1);
+  }
+
   return crypto.randomInt(BOT_DELAY_MIN_MS, BOT_DELAY_MAX_MS + 1);
 }
 
@@ -111,16 +117,25 @@ function createRoom(hostSocket, name, options = {}) {
     usedCards: new Set(),
     history: [],
     logicJudgement: null,
+    demoNarration: null,
     motionCue: null,
     cueId: 0,
     winnerSide: null,
     statusText:
-      matchMode === "solo"
+      matchMode === "demo"
+        ? "Demo bereit. Starte den automatischen Showkampf mit Erklärungen."
+        : matchMode === "solo"
         ? "Computer steht bereit. Du kannst den Kampf sofort starten."
         : "Warte auf die zweite Spielerin oder den zweiten Spieler."
   };
 
-  const host = makePlayer(hostSocket, sanitizeName(name, "Känguru Rot"), "pro", true);
+  const host = makePlayer(
+    hostSocket,
+    sanitizeName(name, matchMode === "demo" ? "Demo Rot" : "Känguru Rot"),
+    "pro",
+    true,
+    { isBot: matchMode === "demo" }
+  );
   room.players.set(host.id, host);
   room.order.push(host.id);
   rooms.set(code, room);
@@ -128,12 +143,19 @@ function createRoom(hostSocket, name, options = {}) {
   hostSocket.roomCode = code;
   hostSocket.playerId = host.id;
 
-  if (matchMode === "solo") {
-    const bot = makePlayer(null, "Computer Blau", "contra", false, {
+  if (matchMode === "solo" || matchMode === "demo") {
+    const bot = makePlayer(null, matchMode === "demo" ? "Demo Blau" : "Computer Blau", "contra", false, {
       isBot: true
     });
     room.players.set(bot.id, bot);
     room.order.push(bot.id);
+  }
+
+  if (matchMode === "demo") {
+    room.demoNarration = {
+      title: "Demo bereit",
+      body: "Dieses Match läuft vollautomatisch ab. Beobachte Angriffe, Gegenargumente, Zeitregeln und den Wechsel der Initiative."
+    };
   }
 
   return room;
@@ -286,7 +308,15 @@ function serializePlayer(room, playerId, viewerId) {
 }
 
 function buildPrompt(room, viewerId) {
+  const levelLabel = room.playLevel === "free_text" ? "Freitext" : "Karten";
+
   if (room.status === "lobby") {
+    if (room.matchMode === "demo") {
+      return room.order[0] === viewerId
+        ? "Starte den Demo-Modus. Danach läuft das ganze Match automatisch mit Erklärungen ab."
+        : "Die Demo wartet auf den Start.";
+    }
+
     if (room.matchMode === "solo") {
       return room.order[0] === viewerId
         ? room.playLevel === "free_text"
@@ -305,6 +335,10 @@ function buildPrompt(room, viewerId) {
   }
 
   if (room.status === "finished") {
+    if (room.matchMode === "demo") {
+      return "Die Demo ist beendet. Du kannst den Showkampf erneut starten.";
+    }
+
     if (!room.winnerSide) {
       return "Match beendet.";
     }
@@ -320,6 +354,12 @@ function buildPrompt(room, viewerId) {
   }
 
   const deadline = turnSeconds(room);
+
+  if (room.matchMode === "demo") {
+    return room.playLevel === "free_text"
+      ? `Die Demo führt gerade automatisch einen Freitext-Zug mit ${deadline} Sekunden Zugzeit aus.`
+      : `Die Demo führt gerade automatisch einen Kartenzug mit ${deadline} Sekunden Zugzeit aus.`;
+  }
 
   if (room.phase === "attack") {
     if (active.id === viewerId) {
@@ -413,6 +453,7 @@ function serializeRoom(room, viewerId) {
         }
       : null,
     logicJudgement: room.logicJudgement,
+    demoNarration: room.demoNarration,
     logicReference: LOGIC_REFERENCE,
     motionCue: room.motionCue,
     yourHand: viewer
@@ -472,6 +513,17 @@ function addHistory(room, entry) {
   });
 }
 
+function setDemoNarration(room, title, body) {
+  if (room.matchMode !== "demo") {
+    return;
+  }
+
+  room.demoNarration = {
+    title,
+    body
+  };
+}
+
 function startMatch(socket) {
   const room = rooms.get(socket.roomCode);
   if (!room) {
@@ -492,6 +544,13 @@ function startMatch(socket) {
 
   const isRematch = room.status === "finished";
   resetRoomForMatch(room);
+  setDemoNarration(
+    room,
+    "Demo gestartet",
+    room.playLevel === "free_text"
+      ? "Die Demo zeigt jetzt einen vollständigen Freitextkampf. Achte darauf, wie eigene Formulierungen logisch bewertet werden."
+      : "Die Demo zeigt jetzt einen vollständigen Kartenkampf. Achte auf Angriff, passende Abwehr, Volltreffer und Initiative-Wechsel."
+  );
   room.statusText =
     room.playLevel === "free_text"
       ? isRematch
@@ -530,6 +589,11 @@ function finishMatch(room, winnerSide, loserSide, details = {}) {
   room.activePlayerId = null;
   room.pendingAttack = null;
   room.statusText = `${winnerSide === "pro" ? "Pro" : "Contra"} gewinnt durch KO. Host kann die Revanche starten.`;
+  setDemoNarration(
+    room,
+    "Demo beendet",
+    `${winnerSide === "pro" ? "Pro" : "Contra"} gewinnt durch KO. In der Demo sieht man hier besonders gut, wie sich Trefferketten und misslungene Abwehr aufbauen.`
+  );
   nextCue(room, {
     type: "ko",
     attackerSide: winnerSide,
@@ -560,6 +624,11 @@ function resolveTurnTimeout(room, timerId) {
     room.pendingAttack = null;
     room.logicJudgement = null;
     room.statusText = `${timedOutPlayer.name} hat die ${seconds} Sekunden für den Angriff verpasst. ${opponent.name} übernimmt die Initiative.`;
+    setDemoNarration(
+      room,
+      "Zeitregel im Angriff",
+      `${timedOutPlayer.name} war zu spät. In der Demo sieht man hier: Wer die Frist für den Angriff verpasst, verliert ohne Treffer die Initiative.`
+    );
     nextCue(room, {
       type: "timeout-turnover",
       attackerSide: timedOutPlayer.side,
@@ -652,6 +721,11 @@ function resolveTurnTimeout(room, timerId) {
     room.activePlayerId = attacker.id;
     room.pendingAttack = null;
     room.statusText = `${defender.name} hat die ${seconds} Sekunden zur Abwehr verpasst. ${attacker.name} bleibt in der Offensive.`;
+    setDemoNarration(
+      room,
+      "Zeitregel in der Abwehr",
+      `${defender.name} hat kein Gegenargument rechtzeitig eingebracht. In der Demo zählt das als Volltreffer für ${attacker.name}.`
+    );
     nextCue(room, {
       type: "timeout-hit",
       attackerSide: attacker.side,
@@ -731,6 +805,11 @@ function performCardPlay(room, playerId, cardId) {
     room.activePlayerId = defenderId;
     room.statusText = `${player.name} greift mit "${card.title}" an.`;
     room.logicJudgement = null;
+    setDemoNarration(
+      room,
+      "Neuer Angriff",
+      `${player.name} eröffnet mit "${card.title}". Jetzt prüft die Gegenseite, welches Gegenargument den Kern dieses Angriffs direkt trifft.`
+    );
     nextCue(room, {
       type: "attack",
       attackerSide: player.side,
@@ -771,6 +850,11 @@ function performCardPlay(room, playerId, cardId) {
     room.activePlayerId = defender.id;
     room.pendingAttack = null;
     room.statusText = `${defender.name} blockt erfolgreich und übernimmt die Initiative.`;
+    setDemoNarration(
+      room,
+      "Valide Abwehr",
+      `${defender.name} pariert mit "${card.title}". Diese Abwehr gilt, weil sie "${attackCard.title}" direkt trifft und damit die Initiative wechselt.`
+    );
     nextCue(room, {
       type: "counter",
       attackerSide: attacker.side,
@@ -816,6 +900,11 @@ function performCardPlay(room, playerId, cardId) {
   room.activePlayerId = attacker.id;
   room.pendingAttack = null;
   room.statusText = `${attacker.name} bleibt nach dem Treffer in der Offensive.`;
+  setDemoNarration(
+    room,
+    "Volltreffer",
+    `${defender.name} reagiert mit "${card.title}", aber das reicht nicht gegen "${attackCard.title}". Deshalb bleibt ${attacker.name} im Angriff.`
+  );
   nextCue(room, {
     type: "hit",
     attackerSide: attacker.side,
@@ -868,6 +957,11 @@ function performTextMove(room, playerId, rawText) {
     room.activePlayerId = defenderId;
     room.statusText = `${player.name} bringt ein Freitext-Argument an.`;
     room.logicJudgement = null;
+    setDemoNarration(
+      room,
+      "Freitext-Angriff",
+      `${player.name} formuliert ein eigenes Argument. Die Demo zeigt jetzt, wie dieses Argument einem Muster zugeordnet und von der Gegenseite logisch beantwortet wird.`
+    );
     nextCue(room, {
       type: "attack",
       attackerSide: player.side,
@@ -913,6 +1007,11 @@ function performTextMove(room, playerId, rawText) {
     room.activePlayerId = defender.id;
     room.pendingAttack = null;
     room.statusText = `${defender.name} kontert im Freitext-Level erfolgreich und übernimmt die Initiative.`;
+    setDemoNarration(
+      room,
+      "Treffendes Gegenargument",
+      `${defender.name} kontert mit einem eigenen Text erfolgreich. In der Demo sieht man hier, dass nicht die Formulierung allein, sondern die logische Passung zum Angriff zählt.`
+    );
     nextCue(room, {
       type: "counter",
       attackerSide: attacker.side,
@@ -958,6 +1057,11 @@ function performTextMove(room, playerId, rawText) {
   room.activePlayerId = attacker.id;
   room.pendingAttack = null;
   room.statusText = `${attacker.name} bleibt nach dem Freitext-Treffer in der Offensive.`;
+  setDemoNarration(
+    room,
+    "Freitext-Treffer",
+    `${defender.name}s Freitext-Abwehr reicht logisch nicht aus. Deshalb zählt der Angriff weiter als Treffer und ${attacker.name} bleibt vorne.`
+  );
   nextCue(room, {
     type: "hit",
     attackerSide: attacker.side,
@@ -986,7 +1090,7 @@ function maybeScheduleBotTurn(room) {
   room.aiTurnHandle = setTimeout(() => {
     room.aiTurnHandle = null;
     handleBotTurn(room);
-  }, randomDelay());
+  }, randomDelay(room));
 }
 
 function chooseBotCard(room, bot) {
@@ -1024,7 +1128,24 @@ function handleBotTurn(room) {
     return;
   }
 
-  const card = chooseBotCard(room, bot);
+  let card = chooseBotCard(room, bot);
+  if (!card) {
+    if (room.matchMode === "demo" && room.playLevel === "cards") {
+      room.usedCards = new Set();
+      addHistory(room, {
+        result: "demo-refresh",
+        headline: "Demo-Karten werden neu gemischt",
+        body: "Damit der Showkampf sicher bis zum KO durchläuft, stehen alle Karten noch einmal bereit."
+      });
+      setDemoNarration(
+        room,
+        "Neue Demo-Runde",
+        "Alle Karten sind wieder freigegeben. So kann der Demo-Kampf im Kartenmodus sicher bis zum KO weiterlaufen."
+      );
+      card = chooseBotCard(room, bot);
+    }
+  }
+
   if (!card) {
     return;
   }
@@ -1055,6 +1176,10 @@ function playCard(socket, cardId) {
     return sendNotice(socket, "Raum nicht gefunden.");
   }
 
+  if (room.matchMode === "demo") {
+    return sendNotice(socket, "Im Demo-Modus läuft das Match vollständig automatisch ab.", "success");
+  }
+
   const result = performCardPlay(room, socket.playerId, cardId);
   if (result.error) {
     return sendNotice(socket, result.error);
@@ -1067,6 +1192,10 @@ function submitTextMove(socket, text) {
   const room = rooms.get(socket.roomCode);
   if (!room) {
     return sendNotice(socket, "Raum nicht gefunden.");
+  }
+
+  if (room.matchMode === "demo") {
+    return sendNotice(socket, "Im Demo-Modus läuft das Match vollständig automatisch ab.", "success");
   }
 
   const result = performTextMove(room, socket.playerId, text);
@@ -1095,7 +1224,7 @@ function handleDisconnect(socket) {
     return;
   }
 
-  if (room.matchMode === "solo") {
+  if (room.matchMode !== "duel") {
     clearTurnTimer(room);
     clearAiTurn(room);
     rooms.delete(room.code);

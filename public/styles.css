@@ -821,7 +821,8 @@ button {
 }
 
 #cards-mode-panel,
-.text-mode-panel {
+.text-mode-panel,
+.demo-mode-panel {
   display: grid;
   gap: 14px;
   min-height: 0;
@@ -835,6 +836,10 @@ button {
 .text-mode-panel {
   grid-template-rows: auto auto minmax(0, 1fr);
   overflow: hidden;
+}
+
+.demo-mode-panel {
+  align-content: start;
 }
 
 .cards-grid {
@@ -886,6 +891,44 @@ button {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.demo-brief {
+  display: grid;
+  gap: 16px;
+}
+
+.demo-spotlight,
+.demo-history-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.demo-spotlight h3,
+.demo-spotlight p,
+.demo-history-item strong,
+.demo-history-item p {
+  margin: 0;
+}
+
+.demo-spotlight p,
+.demo-history-item p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.demo-history {
+  display: grid;
+  gap: 16px;
+}
+
+.demo-history-list {
+  display: grid;
+  gap: 12px;
 }
 
 .defense-helper {
