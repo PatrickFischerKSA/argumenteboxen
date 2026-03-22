@@ -314,6 +314,26 @@ function playSample(
   }
 }
 
+function playMediaSample(
+  name,
+  { volume = 1, delay = 0, layers = 1, staggerMs = 60, rate = 1, rateStep = 0.03 } = {}
+) {
+  if (!state.audioEnabled || !SOUND_FILES[name]) {
+    return;
+  }
+
+  for (let index = 0; index < layers; index += 1) {
+    window.setTimeout(() => {
+      const audio = new Audio(SOUND_FILES[name]);
+      audio.preload = "auto";
+      audio.volume = Math.min(1, volume);
+      audio.playbackRate = Math.max(0.7, rate + index * rateStep);
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }, delay + index * staggerMs);
+  }
+}
+
 function speakArena(text, { delay = 0, rate = 1.18, pitch = 1.05, volume = 1 } = {}) {
   if (!state.audioEnabled || !("speechSynthesis" in window) || !text) {
     return;
@@ -696,6 +716,9 @@ function playCrowdWhistle() {
 }
 
 function playCrowdCheer() {
+  playMediaSample("crowdCall", { volume: 1, delay: 0, layers: 2, staggerMs: 70, rate: 1.02, rateStep: 0.04 });
+  playMediaSample("crowdCall2", { volume: 1, delay: 96, layers: 2, staggerMs: 80, rate: 1.04, rateStep: 0.05 });
+  playMediaSample("whistle", { volume: 1, delay: 150, layers: 2, staggerMs: 90, rate: 0.98, rateStep: 0.06 });
   playSample("crowdCall", { volume: 4.2, delay: 18, layers: 3, staggerMs: 72, rate: 1.02, rateStep: 0.03 });
   playSample("crowdCall2", { volume: 3.8, delay: 92, layers: 3, staggerMs: 90, rate: 1.06, rateStep: 0.04 });
   speakArena("Woo!", { delay: 30, rate: 1.34, pitch: 1.16, volume: 1 });
@@ -718,6 +741,8 @@ function playCueSound(cue) {
   if (cue.type === "match-start") {
     playGongSound();
     window.setTimeout(() => {
+      playMediaSample("crowdCall", { volume: 1, delay: 0, layers: 2, staggerMs: 70, rate: 1.01, rateStep: 0.04 });
+      playMediaSample("crowdCall2", { volume: 1, delay: 92, layers: 2, staggerMs: 80, rate: 1.06, rateStep: 0.05 });
       playCrowdRoar({ gain: 0.08, duration: 0.76, highpass: 220, lowpass: 3200 });
       playCrowdClaps(12, 72, 0.24);
       playCrowdYell({ frequency: 620, slideTo: 1040, duration: 0.36, gain: 0.34 });
@@ -776,6 +801,10 @@ function playCueSound(cue) {
   if (cue.type === "ko") {
     playKoSound();
     window.setTimeout(() => {
+      playMediaSample("crowdKo", { volume: 1, delay: 0, layers: 3, staggerMs: 100, rate: 0.96, rateStep: 0.05 });
+      playMediaSample("crowdCall", { volume: 1, delay: 48, layers: 3, staggerMs: 74, rate: 0.98, rateStep: 0.04 });
+      playMediaSample("crowdCall2", { volume: 1, delay: 132, layers: 3, staggerMs: 88, rate: 1.02, rateStep: 0.05 });
+      playMediaSample("whistle", { volume: 1, delay: 180, layers: 3, staggerMs: 110, rate: 0.96, rateStep: 0.05 });
       playSample("crowdKo", { volume: 5, layers: 3, staggerMs: 120, rate: 0.96, rateStep: 0.05 });
       playSample("crowdCall", { volume: 4.6, delay: 56, layers: 3, staggerMs: 86, rate: 0.98, rateStep: 0.04 });
       playSample("crowdCall2", { volume: 4.2, delay: 132, layers: 3, staggerMs: 100, rate: 1.02, rateStep: 0.05 });

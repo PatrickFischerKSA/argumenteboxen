@@ -19,7 +19,7 @@ const {
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const HITS_TO_KO = 3;
-const DEMO_FORCE_HIT_AT_ATTACK = 3;
+const DEMO_FORCE_HIT_AT_ATTACK = 2;
 const CARD_TURN_TIME_MS = 30_000;
 const TEXT_TURN_TIME_MS = 90_000;
 const BOT_DELAY_MIN_MS = 900;
