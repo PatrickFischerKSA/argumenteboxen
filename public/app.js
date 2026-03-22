@@ -233,7 +233,7 @@ function ensureAudio() {
   state.compressor.attack.setValueAtTime(0.003, state.audioCtx.currentTime);
   state.compressor.release.setValueAtTime(0.18, state.audioCtx.currentTime);
   state.masterGain = state.audioCtx.createGain();
-  state.masterGain.gain.value = 0.5;
+  state.masterGain.gain.value = 0.66;
   state.masterGain.connect(state.compressor);
   state.compressor.connect(state.audioCtx.destination);
   state.noiseBuffer = createNoiseBuffer(state.audioCtx);
@@ -316,14 +316,14 @@ function startCrowdAmbience() {
   state.crowdFilter.Q.setValueAtTime(0.35, now);
 
   state.crowdGain = state.audioCtx.createGain();
-  state.crowdGain.gain.setValueAtTime(0.045, now);
+  state.crowdGain.gain.setValueAtTime(0.03, now);
 
   state.crowdLfo = state.audioCtx.createOscillator();
   state.crowdLfo.type = "sine";
   state.crowdLfo.frequency.setValueAtTime(0.22, now);
 
   state.crowdLfoGain = state.audioCtx.createGain();
-  state.crowdLfoGain.gain.setValueAtTime(0.018, now);
+  state.crowdLfoGain.gain.setValueAtTime(0.01, now);
 
   state.crowdHissSource = state.audioCtx.createBufferSource();
   state.crowdHissSource.buffer = state.noiseBuffer;
@@ -338,7 +338,7 @@ function startCrowdAmbience() {
   hissLowpass.frequency.setValueAtTime(5200, now);
 
   state.crowdHissGain = state.audioCtx.createGain();
-  state.crowdHissGain.gain.setValueAtTime(0.012, now);
+  state.crowdHissGain.gain.setValueAtTime(0.006, now);
 
   state.crowdLfo.connect(state.crowdLfoGain);
   state.crowdLfoGain.connect(state.crowdGain.gain);
@@ -390,7 +390,7 @@ function updateMusicButton() {
 
 async function setMusicEnabled(enabled) {
   state.musicEnabled = enabled;
-  els.bgMusic.volume = 0.08;
+  els.bgMusic.volume = 0.04;
 
   if (!enabled) {
     els.bgMusic.pause();
@@ -510,11 +510,18 @@ function playSwingSound() {
   playNoiseBurst({ duration: 0.15, gain: 0.18, highpass: 300, lowpass: 5600, release: 0.11 });
 }
 
+function playHitCrack(strength = 1) {
+  pulseTone({ frequency: 1450, slideTo: 880, duration: 0.07, type: "square", gain: 0.16 * strength });
+  pulseTone({ frequency: 2380, slideTo: 1540, duration: 0.05, type: "sawtooth", gain: 0.08 * strength });
+  playNoiseBurst({ duration: 0.08, gain: 0.14 * strength, highpass: 800, lowpass: 7200, release: 0.06 });
+}
+
 function playImpactSound(strength = 1) {
-  pulseTone({ frequency: 182, slideTo: 64, duration: 0.24, type: "square", gain: 0.42 * strength });
-  pulseTone({ frequency: 114, slideTo: 46, duration: 0.34, type: "triangle", gain: 0.28 * strength });
-  pulseTone({ frequency: 520, slideTo: 180, duration: 0.12, type: "sawtooth", gain: 0.16 * strength });
-  playNoiseBurst({ duration: 0.24, gain: 0.34 * strength, highpass: 90, lowpass: 3000, release: 0.18 });
+  pulseTone({ frequency: 182, slideTo: 64, duration: 0.24, type: "square", gain: 0.38 * strength });
+  pulseTone({ frequency: 114, slideTo: 46, duration: 0.34, type: "triangle", gain: 0.26 * strength });
+  pulseTone({ frequency: 520, slideTo: 180, duration: 0.12, type: "sawtooth", gain: 0.14 * strength });
+  playNoiseBurst({ duration: 0.24, gain: 0.28 * strength, highpass: 90, lowpass: 3000, release: 0.18 });
+  playHitCrack(strength);
 }
 
 function playPainSound(strength = 1) {
@@ -532,33 +539,35 @@ function playBlockSound() {
   playNoiseBurst({ duration: 0.12, gain: 0.14, highpass: 1500, lowpass: 6200, release: 0.1 });
 }
 
+function playBellStrike({ delay = 0, base = 1040, gain = 0.34 } = {}) {
+  window.setTimeout(() => {
+    pulseTone({ frequency: base, duration: 0.06, type: "square", gain });
+    pulseTone({ frequency: base * 1.98, duration: 0.08, type: "square", gain: gain * 0.72 });
+    pulseTone({ frequency: base * 2.94, duration: 0.05, type: "sawtooth", gain: gain * 0.4 });
+    pulseTone({ frequency: 340, duration: 1.5, type: "triangle", gain: gain * 0.18 });
+    pulseTone({ frequency: 486, duration: 1.12, type: "triangle", gain: gain * 0.14 });
+    playNoiseBurst({ duration: 0.09, gain: gain * 0.82, highpass: 920, lowpass: 9600, release: 0.06 });
+  }, delay);
+}
+
 function playGongSound() {
-  pulseTone({ frequency: 980, duration: 0.1, type: "square", gain: 0.4 });
-  pulseTone({ frequency: 1880, duration: 0.11, type: "sawtooth", gain: 0.34 });
-  pulseTone({ frequency: 3020, duration: 0.08, type: "square", gain: 0.24 });
-  playNoiseBurst({ duration: 0.12, gain: 0.34, highpass: 900, lowpass: 9000, release: 0.08 });
+  playBellStrike({ delay: 0, base: 1120, gain: 0.42 });
+  playBellStrike({ delay: 64, base: 1040, gain: 0.34 });
+  playBellStrike({ delay: 138, base: 980, gain: 0.28 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 910, duration: 0.1, type: "square", gain: 0.34 });
-    pulseTone({ frequency: 1730, duration: 0.11, type: "sawtooth", gain: 0.28 });
-    pulseTone({ frequency: 2740, duration: 0.08, type: "square", gain: 0.2 });
-    playNoiseBurst({ duration: 0.11, gain: 0.28, highpass: 840, lowpass: 8800, release: 0.08 });
-  }, 60);
-  window.setTimeout(() => {
-    pulseTone({ frequency: 320, duration: 2.2, type: "sine", gain: 0.28 });
-    pulseTone({ frequency: 438, duration: 1.9, type: "triangle", gain: 0.24 });
-    pulseTone({ frequency: 612, duration: 1.35, type: "triangle", gain: 0.18 });
-    pulseTone({ frequency: 1480, duration: 0.8, type: "square", gain: 0.18 });
-    pulseTone({ frequency: 2260, duration: 0.42, type: "square", gain: 0.1 });
-    playNoiseBurst({ duration: 0.78, gain: 0.32, highpass: 340, lowpass: 7600, release: 0.62 });
-  }, 18);
+    pulseTone({ frequency: 360, duration: 2.4, type: "triangle", gain: 0.24 });
+    pulseTone({ frequency: 520, duration: 1.9, type: "triangle", gain: 0.2 });
+    pulseTone({ frequency: 740, duration: 1.25, type: "sine", gain: 0.12 });
+    playNoiseBurst({ duration: 0.64, gain: 0.22, highpass: 380, lowpass: 8200, release: 0.54 });
+  }, 26);
 }
 
 function playKoSound() {
-  playImpactSound(1.8);
+  playImpactSound(2.4);
   window.setTimeout(() => {
-    pulseTone({ frequency: 120, slideTo: 30, duration: 1.02, type: "sawtooth", gain: 0.64 });
-    pulseTone({ frequency: 68, slideTo: 34, duration: 1.14, type: "triangle", gain: 0.28 });
-    playNoiseBurst({ duration: 0.58, gain: 0.44, highpass: 50, lowpass: 1400, release: 0.46 });
+    pulseTone({ frequency: 120, slideTo: 30, duration: 1.02, type: "sawtooth", gain: 0.72 });
+    pulseTone({ frequency: 68, slideTo: 34, duration: 1.14, type: "triangle", gain: 0.34 });
+    playNoiseBurst({ duration: 0.58, gain: 0.5, highpass: 50, lowpass: 1400, release: 0.46 });
   }, 55);
   window.setTimeout(() => {
     playPainSound(1.45);
@@ -583,6 +592,18 @@ function playCrowdYell({ frequency = 720, slideTo = 1080, duration = 0.32, gain 
   }, delay);
 }
 
+function playCrowdChant({ delay = 0, gain = 0.14 } = {}) {
+  window.setTimeout(() => {
+    pulseTone({ frequency: 540, slideTo: 700, duration: 0.18, type: "square", gain });
+    window.setTimeout(() => {
+      pulseTone({ frequency: 620, slideTo: 860, duration: 0.2, type: "square", gain: gain * 0.9 });
+    }, 86);
+    window.setTimeout(() => {
+      pulseTone({ frequency: 700, slideTo: 980, duration: 0.22, type: "triangle", gain: gain * 0.82 });
+    }, 168);
+  }, delay);
+}
+
 function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
   for (let index = 0; index < count; index += 1) {
     window.setTimeout(() => {
@@ -600,24 +621,25 @@ function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
 }
 
 function playCrowdWhistle() {
-  pulseTone({ frequency: 2280, slideTo: 1740, duration: 0.22, type: "triangle", gain: 0.22 });
-  pulseTone({ frequency: 3160, slideTo: 2620, duration: 0.14, type: "square", gain: 0.08 });
+  pulseTone({ frequency: 2480, slideTo: 1820, duration: 0.24, type: "triangle", gain: 0.28 });
+  pulseTone({ frequency: 3380, slideTo: 2740, duration: 0.14, type: "square", gain: 0.12 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 2460, slideTo: 1860, duration: 0.2, type: "triangle", gain: 0.18 });
+    pulseTone({ frequency: 2680, slideTo: 1940, duration: 0.22, type: "triangle", gain: 0.24 });
   }, 85);
   window.setTimeout(() => {
-    pulseTone({ frequency: 2140, slideTo: 2680, duration: 0.18, type: "triangle", gain: 0.14 });
+    pulseTone({ frequency: 2280, slideTo: 2880, duration: 0.18, type: "triangle", gain: 0.18 });
   }, 180);
 }
 
 function playCrowdCheer() {
-  playCrowdRoar({ gain: 0.26, duration: 0.72, highpass: 240, lowpass: 4200 });
-  playCrowdClaps(8, 88, 0.19);
-  playCrowdYell({ frequency: 680, slideTo: 1040, duration: 0.28, gain: 0.17, delay: 35 });
-  playCrowdYell({ frequency: 760, slideTo: 1280, duration: 0.24, gain: 0.13, delay: 120 });
+  playCrowdRoar({ gain: 0.16, duration: 0.58, highpass: 260, lowpass: 3600 });
+  playCrowdClaps(9, 82, 0.22);
+  playCrowdYell({ frequency: 700, slideTo: 1120, duration: 0.3, gain: 0.22, delay: 20 });
+  playCrowdYell({ frequency: 860, slideTo: 1420, duration: 0.24, gain: 0.16, delay: 110 });
+  playCrowdChant({ delay: 170, gain: 0.15 });
   window.setTimeout(() => {
     playCrowdWhistle();
-  }, 150);
+  }, 120);
 }
 
 function playCueSound(cue) {
@@ -628,10 +650,11 @@ function playCueSound(cue) {
   if (cue.type === "match-start") {
     playGongSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.28, duration: 1.1, highpass: 220, lowpass: 3800 });
-      playCrowdClaps(10, 84, 0.2);
-      playCrowdYell({ frequency: 620, slideTo: 980, duration: 0.36, gain: 0.18 });
-      playCrowdYell({ frequency: 780, slideTo: 1240, duration: 0.28, gain: 0.14, delay: 110 });
+      playCrowdRoar({ gain: 0.18, duration: 0.86, highpass: 220, lowpass: 3400 });
+      playCrowdClaps(10, 80, 0.22);
+      playCrowdYell({ frequency: 620, slideTo: 1020, duration: 0.36, gain: 0.22 });
+      playCrowdYell({ frequency: 820, slideTo: 1320, duration: 0.28, gain: 0.16, delay: 100 });
+      playCrowdChant({ delay: 190, gain: 0.16 });
     }, 90);
     window.setTimeout(() => {
       playCrowdWhistle();
@@ -650,9 +673,9 @@ function playCueSound(cue) {
   }
 
   if (cue.type === "hit") {
-    playImpactSound(1.15);
+    playImpactSound(1);
     window.setTimeout(() => {
-      playPainSound(1.05);
+      playPainSound(0.95);
     }, 50);
     window.setTimeout(() => {
       playCrowdCheer();
@@ -661,15 +684,16 @@ function playCueSound(cue) {
   }
 
   if (cue.type === "timeout-hit") {
-    playImpactSound(1.55);
+    playImpactSound(1.95);
     window.setTimeout(() => {
-      playPainSound(1.35);
+      playPainSound(1.4);
     }, 50);
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.34, duration: 0.95, highpass: 220, lowpass: 4200 });
-      playCrowdClaps(10, 76, 0.24);
-      playCrowdYell({ frequency: 660, slideTo: 1120, duration: 0.34, gain: 0.2 });
-      playCrowdYell({ frequency: 820, slideTo: 1380, duration: 0.26, gain: 0.16, delay: 95 });
+      playCrowdRoar({ gain: 0.2, duration: 0.72, highpass: 220, lowpass: 3800 });
+      playCrowdClaps(12, 72, 0.26);
+      playCrowdYell({ frequency: 660, slideTo: 1180, duration: 0.34, gain: 0.24 });
+      playCrowdYell({ frequency: 860, slideTo: 1440, duration: 0.26, gain: 0.18, delay: 95 });
+      playCrowdChant({ delay: 160, gain: 0.16 });
       playCrowdWhistle();
     }, 85);
     return;
@@ -684,11 +708,13 @@ function playCueSound(cue) {
   if (cue.type === "ko") {
     playKoSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.42, duration: 2.4, highpass: 140, lowpass: 3600 });
-      playCrowdClaps(18, 68, 0.26);
-      playCrowdYell({ frequency: 640, slideTo: 1180, duration: 0.44, gain: 0.22 });
-      playCrowdYell({ frequency: 760, slideTo: 1360, duration: 0.34, gain: 0.18, delay: 110 });
-      playCrowdYell({ frequency: 820, slideTo: 1520, duration: 0.28, gain: 0.16, delay: 240 });
+      playCrowdRoar({ gain: 0.22, duration: 1.3, highpass: 160, lowpass: 3400 });
+      playCrowdClaps(20, 62, 0.28);
+      playCrowdYell({ frequency: 640, slideTo: 1240, duration: 0.44, gain: 0.28 });
+      playCrowdYell({ frequency: 760, slideTo: 1420, duration: 0.34, gain: 0.22, delay: 110 });
+      playCrowdYell({ frequency: 900, slideTo: 1600, duration: 0.28, gain: 0.18, delay: 240 });
+      playCrowdChant({ delay: 180, gain: 0.18 });
+      playCrowdChant({ delay: 390, gain: 0.16 });
       playCrowdWhistle();
       window.setTimeout(() => {
         playCrowdWhistle();
@@ -1530,6 +1556,6 @@ els.modePickButtons.forEach((button) => {
 
 updateAudioButton();
 updateMusicButton();
-els.bgMusic.volume = 0.08;
+els.bgMusic.volume = 0.04;
 updateSetupOptions();
 connect();
