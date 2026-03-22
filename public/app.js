@@ -233,7 +233,7 @@ function ensureAudio() {
   state.compressor.attack.setValueAtTime(0.003, state.audioCtx.currentTime);
   state.compressor.release.setValueAtTime(0.18, state.audioCtx.currentTime);
   state.masterGain = state.audioCtx.createGain();
-  state.masterGain.gain.value = 0.28;
+  state.masterGain.gain.value = 0.42;
   state.masterGain.connect(state.compressor);
   state.compressor.connect(state.audioCtx.destination);
   state.noiseBuffer = createNoiseBuffer(state.audioCtx);
@@ -316,14 +316,14 @@ function startCrowdAmbience() {
   state.crowdFilter.Q.setValueAtTime(0.45, now);
 
   state.crowdGain = state.audioCtx.createGain();
-  state.crowdGain.gain.setValueAtTime(0.036, now);
+  state.crowdGain.gain.setValueAtTime(0.06, now);
 
   state.crowdLfo = state.audioCtx.createOscillator();
   state.crowdLfo.type = "sine";
   state.crowdLfo.frequency.setValueAtTime(0.22, now);
 
   state.crowdLfoGain = state.audioCtx.createGain();
-  state.crowdLfoGain.gain.setValueAtTime(0.02, now);
+  state.crowdLfoGain.gain.setValueAtTime(0.03, now);
 
   state.crowdHissSource = state.audioCtx.createBufferSource();
   state.crowdHissSource.buffer = state.noiseBuffer;
@@ -338,7 +338,7 @@ function startCrowdAmbience() {
   hissLowpass.frequency.setValueAtTime(5200, now);
 
   state.crowdHissGain = state.audioCtx.createGain();
-  state.crowdHissGain.gain.setValueAtTime(0.014, now);
+  state.crowdHissGain.gain.setValueAtTime(0.022, now);
 
   state.crowdLfo.connect(state.crowdLfoGain);
   state.crowdLfoGain.connect(state.crowdGain.gain);
@@ -390,7 +390,7 @@ function updateMusicButton() {
 
 async function setMusicEnabled(enabled) {
   state.musicEnabled = enabled;
-  els.bgMusic.volume = 0.22;
+  els.bgMusic.volume = 0.1;
 
   if (!enabled) {
     els.bgMusic.pause();
@@ -506,55 +506,56 @@ function playNoiseBurst({
 }
 
 function playSwingSound() {
-  pulseTone({ frequency: 320, slideTo: 130, duration: 0.18, type: "sawtooth", gain: 0.12 });
-  playNoiseBurst({ duration: 0.14, gain: 0.08, highpass: 380, lowpass: 4600, release: 0.1 });
+  pulseTone({ frequency: 360, slideTo: 120, duration: 0.2, type: "sawtooth", gain: 0.18 });
+  playNoiseBurst({ duration: 0.16, gain: 0.14, highpass: 340, lowpass: 5200, release: 0.12 });
 }
 
 function playImpactSound() {
-  pulseTone({ frequency: 164, slideTo: 68, duration: 0.24, type: "square", gain: 0.32 });
-  pulseTone({ frequency: 96, slideTo: 46, duration: 0.34, type: "triangle", gain: 0.22 });
-  playNoiseBurst({ duration: 0.22, gain: 0.34, highpass: 110, lowpass: 2100, release: 0.18 });
+  pulseTone({ frequency: 170, slideTo: 62, duration: 0.28, type: "square", gain: 0.54 });
+  pulseTone({ frequency: 102, slideTo: 42, duration: 0.38, type: "triangle", gain: 0.34 });
+  playNoiseBurst({ duration: 0.28, gain: 0.52, highpass: 90, lowpass: 2600, release: 0.22 });
 }
 
 function playPainSound() {
-  pulseTone({ frequency: 760, slideTo: 440, duration: 0.13, type: "sawtooth", gain: 0.11 });
+  pulseTone({ frequency: 840, slideTo: 420, duration: 0.16, type: "sawtooth", gain: 0.18 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 640, slideTo: 300, duration: 0.18, type: "triangle", gain: 0.09 });
+    pulseTone({ frequency: 700, slideTo: 280, duration: 0.22, type: "triangle", gain: 0.14 });
   }, 40);
 }
 
 function playBlockSound() {
-  pulseTone({ frequency: 560, duration: 0.08, type: "square", gain: 0.12 });
+  pulseTone({ frequency: 620, duration: 0.09, type: "square", gain: 0.18 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 980, duration: 0.1, type: "triangle", gain: 0.1 });
+    pulseTone({ frequency: 1180, duration: 0.12, type: "triangle", gain: 0.16 });
   }, 35);
-  playNoiseBurst({ duration: 0.1, gain: 0.09, highpass: 1400, lowpass: 5600, release: 0.08 });
+  playNoiseBurst({ duration: 0.12, gain: 0.14, highpass: 1500, lowpass: 6200, release: 0.1 });
 }
 
 function playGongSound() {
-  pulseTone({ frequency: 620, duration: 0.14, type: "square", gain: 0.18 });
-  pulseTone({ frequency: 1180, duration: 0.12, type: "triangle", gain: 0.14 });
+  pulseTone({ frequency: 780, duration: 0.16, type: "square", gain: 0.42 });
+  pulseTone({ frequency: 1560, duration: 0.14, type: "triangle", gain: 0.32 });
+  pulseTone({ frequency: 2460, duration: 0.11, type: "sawtooth", gain: 0.2 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 196, duration: 2.2, type: "sine", gain: 0.24 });
-    pulseTone({ frequency: 293, duration: 1.9, type: "triangle", gain: 0.18 });
-    pulseTone({ frequency: 410, duration: 1.45, type: "triangle", gain: 0.14 });
-    pulseTone({ frequency: 1260, duration: 0.6, type: "square", gain: 0.12 });
-    playNoiseBurst({ duration: 0.62, gain: 0.24, highpass: 220, lowpass: 5200, release: 0.52 });
+    pulseTone({ frequency: 196, duration: 2.6, type: "sine", gain: 0.4 });
+    pulseTone({ frequency: 293, duration: 2.15, type: "triangle", gain: 0.3 });
+    pulseTone({ frequency: 410, duration: 1.7, type: "triangle", gain: 0.22 });
+    pulseTone({ frequency: 1320, duration: 0.95, type: "square", gain: 0.24 });
+    playNoiseBurst({ duration: 0.8, gain: 0.42, highpass: 200, lowpass: 6800, release: 0.68 });
   }, 24);
 }
 
 function playKoSound() {
   playImpactSound();
   window.setTimeout(() => {
-    pulseTone({ frequency: 120, slideTo: 38, duration: 0.78, type: "sawtooth", gain: 0.28 });
-    playNoiseBurst({ duration: 0.42, gain: 0.18, highpass: 70, lowpass: 1000, release: 0.34 });
+    pulseTone({ frequency: 120, slideTo: 32, duration: 0.94, type: "sawtooth", gain: 0.56 });
+    playNoiseBurst({ duration: 0.54, gain: 0.38, highpass: 60, lowpass: 1200, release: 0.42 });
   }, 55);
   window.setTimeout(() => {
     playPainSound();
   }, 120);
 }
 
-function playCrowdRoar({ gain = 0.2, duration = 0.9, highpass = 180, lowpass = 3200 } = {}) {
+function playCrowdRoar({ gain = 0.3, duration = 0.9, highpass = 180, lowpass = 3200 } = {}) {
   playNoiseBurst({
     duration,
     gain,
@@ -565,7 +566,7 @@ function playCrowdRoar({ gain = 0.2, duration = 0.9, highpass = 180, lowpass = 3
   });
 }
 
-function playCrowdClaps(count = 6, spacing = 120, gain = 0.14) {
+function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
   for (let index = 0; index < count; index += 1) {
     window.setTimeout(() => {
       playNoiseBurst({
@@ -576,21 +577,21 @@ function playCrowdClaps(count = 6, spacing = 120, gain = 0.14) {
         attack: 0.002,
         release: 0.04
       });
-      pulseTone({ frequency: 1800, duration: 0.03, type: "square", gain: 0.03 });
+      pulseTone({ frequency: 2100, duration: 0.04, type: "square", gain: 0.06 });
     }, index * spacing);
   }
 }
 
 function playCrowdWhistle() {
-  pulseTone({ frequency: 1680, slideTo: 1320, duration: 0.22, type: "triangle", gain: 0.08 });
+  pulseTone({ frequency: 1960, slideTo: 1380, duration: 0.26, type: "triangle", gain: 0.14 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 1480, slideTo: 1820, duration: 0.18, type: "triangle", gain: 0.06 });
+    pulseTone({ frequency: 1740, slideTo: 2240, duration: 0.22, type: "triangle", gain: 0.12 });
   }, 70);
 }
 
 function playCrowdCheer() {
-  playCrowdRoar({ gain: 0.2, duration: 0.75, highpass: 240, lowpass: 4200 });
-  playCrowdClaps(5, 110, 0.12);
+  playCrowdRoar({ gain: 0.34, duration: 0.95, highpass: 240, lowpass: 4600 });
+  playCrowdClaps(7, 95, 0.22);
   window.setTimeout(() => {
     playCrowdWhistle();
   }, 120);
@@ -604,8 +605,8 @@ function playCueSound(cue) {
   if (cue.type === "match-start") {
     playGongSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.24, duration: 1.0, highpass: 220, lowpass: 3600 });
-      playCrowdClaps(7, 105, 0.15);
+      playCrowdRoar({ gain: 0.38, duration: 1.3, highpass: 220, lowpass: 4000 });
+      playCrowdClaps(10, 90, 0.24);
     }, 110);
     window.setTimeout(() => {
       playCrowdWhistle();
@@ -630,7 +631,7 @@ function playCueSound(cue) {
     }, 55);
     window.setTimeout(() => {
       playCrowdCheer();
-      playCrowdClaps(4, 95, 0.11);
+      playCrowdClaps(6, 85, 0.18);
     }, 90);
     return;
   }
@@ -644,8 +645,8 @@ function playCueSound(cue) {
   if (cue.type === "ko") {
     playKoSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.34, duration: 1.8, highpass: 150, lowpass: 3200 });
-      playCrowdClaps(10, 95, 0.17);
+      playCrowdRoar({ gain: 0.48, duration: 2.2, highpass: 140, lowpass: 3600 });
+      playCrowdClaps(14, 80, 0.28);
       playCrowdWhistle();
     }, 120);
   }
