@@ -94,6 +94,7 @@ const SOUND_FILES = {
   ko: "/assets/audio/sfx/ko.wav",
   crowdCall: "/assets/audio/sfx/crowd-call.wav",
   crowdCall2: "/assets/audio/sfx/crowd-call-2.wav",
+  crowdKo: "/assets/audio/sfx/crowd-ko.wav",
   clap: "/assets/audio/sfx/clap.wav",
   whistle: "/assets/audio/sfx/whistle.wav"
 };
@@ -675,8 +676,8 @@ function playCrowdWhistle() {
 }
 
 function playCrowdCheer() {
-  playSample("crowdCall", { volume: 2.8, delay: 18, layers: 2, staggerMs: 90, rate: 1.02, rateStep: 0.03 });
-  playSample("crowdCall2", { volume: 2.5, delay: 110, layers: 2, staggerMs: 110, rate: 1.06, rateStep: 0.04 });
+  playSample("crowdCall", { volume: 4.2, delay: 18, layers: 3, staggerMs: 72, rate: 1.02, rateStep: 0.03 });
+  playSample("crowdCall2", { volume: 3.8, delay: 92, layers: 3, staggerMs: 90, rate: 1.06, rateStep: 0.04 });
   playCrowdRoar({ gain: 0.02, duration: 0.46, highpass: 260, lowpass: 3200 });
   playCrowdClaps(10, 78, 0.24);
   playCrowdYell({ frequency: 660, slideTo: 1040, duration: 0.3, gain: 0.32, delay: 12 });
@@ -753,6 +754,9 @@ function playCueSound(cue) {
   if (cue.type === "ko") {
     playKoSound();
     window.setTimeout(() => {
+      playSample("crowdKo", { volume: 5, layers: 3, staggerMs: 120, rate: 0.96, rateStep: 0.05 });
+      playSample("crowdCall", { volume: 4.6, delay: 56, layers: 3, staggerMs: 86, rate: 0.98, rateStep: 0.04 });
+      playSample("crowdCall2", { volume: 4.2, delay: 132, layers: 3, staggerMs: 100, rate: 1.02, rateStep: 0.05 });
       playCrowdRoar({ gain: 0.11, duration: 1.08, highpass: 160, lowpass: 3200 });
       playCrowdClaps(22, 56, 0.3);
       playCrowdYell({ frequency: 640, slideTo: 1240, duration: 0.44, gain: 0.44 });
