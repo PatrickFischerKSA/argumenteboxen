@@ -3,6 +3,7 @@ const state = {
   room: null,
   selectedCardId: null,
   activeInfoTab: "history",
+  pendingAutoStartDemo: false,
   textDraft: "",
   lastCueId: null,
   timerInterval: null,
@@ -127,6 +128,19 @@ function updateSetupOptions() {
   clearTimerDisplay();
 }
 
+function createRoomWithCurrentSettings() {
+  ensureAudio();
+  const name = els.nameInput.value.trim();
+  const matchMode = els.matchModeSelect.value;
+  state.pendingAutoStartDemo = matchMode === "demo";
+  send({
+    type: "create_room",
+    name,
+    matchMode,
+    playLevel: els.playLevelSelect.value
+  });
+}
+
 function connect() {
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
   state.ws = new WebSocket(`${protocol}://${window.location.host}`);
@@ -141,6 +155,16 @@ function connect() {
     const previousRoom = state.room;
     state.room = payload;
     syncSelection();
+
+    if (
+      state.pendingAutoStartDemo &&
+      payload.matchMode === "demo" &&
+      payload.status === "lobby" &&
+      payload.canStart
+    ) {
+      state.pendingAutoStartDemo = false;
+      send({ type: "start_match" });
+    }
 
     if (
       previousRoom?.playLevel === "free_text" &&
@@ -1063,14 +1087,7 @@ function maybePlayMotionCue(cue) {
 }
 
 els.createRoomBtn.addEventListener("click", () => {
-  ensureAudio();
-  const name = els.nameInput.value.trim();
-  send({
-    type: "create_room",
-    name,
-    matchMode: els.matchModeSelect.value,
-    playLevel: els.playLevelSelect.value
-  });
+  createRoomWithCurrentSettings();
 });
 
 els.joinRoomBtn.addEventListener("click", () => {
@@ -1140,6 +1157,10 @@ els.modePickButtons.forEach((button) => {
   button.addEventListener("click", () => {
     els.matchModeSelect.value = button.dataset.modePick || "duel";
     updateSetupOptions();
+
+    if (button.dataset.modePick === "demo") {
+      createRoomWithCurrentSettings();
+    }
   });
 });
 
