@@ -390,7 +390,9 @@ function currentActionLabel() {
   }
 
   if (state.room.matchMode === "demo") {
-    return "Der Demo-Modus spielt das ganze Match automatisch und erklärt jeden Schritt.";
+    return state.room.status === "active"
+      ? "Der Demo-Modus spielt automatisch weiter. Der nächste Zug kommt nach etwa 6 Sekunden."
+      : "Der Demo-Modus spielt das ganze Match automatisch und erklärt jeden Schritt.";
   }
 
   if (state.room.status !== "active") {
@@ -534,6 +536,11 @@ function renderDemoPanel() {
       <p class="eyebrow">Demo-Erklärung</p>
       <h3>${escapeHtml(narration?.title || "Showkampf bereit")}</h3>
       <p>${escapeHtml(narration?.body || "Starte den Demo-Modus. Danach laufen beide Seiten automatisch durch ein ganzes Match.")}</p>
+      ${
+        state.room?.status === "active"
+          ? "<p class='demo-wait-note'>Automatische Fortsetzung: Der nächste Demo-Zug folgt nach ungefähr 6 Sekunden.</p>"
+          : ""
+      }
     </article>
     <div class="demo-history">
       <div class="panel-heading compact">

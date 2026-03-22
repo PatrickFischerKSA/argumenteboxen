@@ -978,6 +978,11 @@ button {
   line-height: 1.45;
 }
 
+.demo-wait-note {
+  color: var(--gold) !important;
+  font-weight: 700;
+}
+
 .demo-history {
   display: grid;
   gap: 16px;
