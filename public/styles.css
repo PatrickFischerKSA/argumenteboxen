@@ -215,6 +215,63 @@ button {
   margin-bottom: 14px;
 }
 
+.mode-picks {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mode-pick-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mode-pick {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.mode-pick strong,
+.mode-pick span {
+  margin: 0;
+}
+
+.mode-pick strong {
+  font-size: 1.02rem;
+}
+
+.mode-pick span {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.mode-pick:hover {
+  transform: translateY(-1px);
+}
+
+.mode-pick.active {
+  border-color: rgba(246, 197, 93, 0.42);
+  background: rgba(246, 197, 93, 0.11);
+  box-shadow: 0 14px 28px rgba(246, 197, 93, 0.12);
+}
+
+.mode-pick.featured {
+  background: linear-gradient(135deg, rgba(246, 197, 93, 0.16), rgba(255, 149, 113, 0.08));
+  border-color: rgba(246, 197, 93, 0.26);
+}
+
+.mode-pick.featured.active {
+  background: linear-gradient(135deg, rgba(246, 197, 93, 0.24), rgba(255, 149, 113, 0.12));
+  border-color: rgba(246, 197, 93, 0.48);
+}
+
 .field span {
   font-size: 0.92rem;
   text-transform: uppercase;
@@ -1580,6 +1637,12 @@ button {
 
   .sidebar {
     grid-column: auto;
+  }
+}
+
+@media (min-width: 721px) {
+  .mode-pick-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

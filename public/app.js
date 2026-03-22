@@ -21,6 +21,7 @@ const els = {
   nameInput: document.getElementById("name-input"),
   roomCodeInput: document.getElementById("room-code-input"),
   matchModeSelect: document.getElementById("match-mode-select"),
+  modePickButtons: Array.from(document.querySelectorAll("[data-mode-pick]")),
   playLevelSelect: document.getElementById("play-level-select"),
   joinBox: document.getElementById("join-box"),
   createRoomBtn: document.getElementById("create-room-btn"),
@@ -103,9 +104,25 @@ function setupNoticeText() {
     : "Beide Spieler*innen spielen im Browser auf demselben Server, aber auf zwei verschiedenen Computern.";
 }
 
+function syncModePickButtons() {
+  const activeMode = els.matchModeSelect.value;
+  els.modePickButtons.forEach((button) => {
+    const active = button.dataset.modePick === activeMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
 function updateSetupOptions() {
   const oneDeviceMode = els.matchModeSelect.value === "solo" || els.matchModeSelect.value === "demo";
   els.joinBox.classList.toggle("hidden", oneDeviceMode);
+  els.createRoomBtn.textContent =
+    els.matchModeSelect.value === "demo"
+      ? "Demo-Raum starten"
+      : els.matchModeSelect.value === "solo"
+        ? "Solo-Raum starten"
+        : "Neuen Raum erstellen";
+  syncModePickButtons();
   showNotice(setupNoticeText(), "success");
   clearTimerDisplay();
 }
@@ -1119,6 +1136,12 @@ els.audioToggleBtn.addEventListener("click", () => {
 
 els.matchModeSelect.addEventListener("change", updateSetupOptions);
 els.playLevelSelect.addEventListener("change", updateSetupOptions);
+els.modePickButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    els.matchModeSelect.value = button.dataset.modePick || "duel";
+    updateSetupOptions();
+  });
+});
 
 updateAudioButton();
 updateMusicButton();

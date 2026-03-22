@@ -56,6 +56,24 @@
             <input id="name-input" maxlength="24" placeholder="z. B. Team Rot" />
           </label>
 
+          <div class="mode-picks" aria-label="Spielmodus Schnellwahl">
+            <p class="eyebrow">Schnellwahl</p>
+            <div class="mode-pick-grid">
+              <button class="mode-pick" data-mode-pick="duel" type="button">
+                <strong>Duell</strong>
+                <span>Zwei Computer treten gegeneinander an.</span>
+              </button>
+              <button class="mode-pick" data-mode-pick="solo" type="button">
+                <strong>Solo</strong>
+                <span>Du spielst gegen den Computer.</span>
+              </button>
+              <button class="mode-pick featured" data-mode-pick="demo" type="button">
+                <strong>Demo starten</strong>
+                <span>Automatischer Showkampf mit Erklärungen.</span>
+              </button>
+            </div>
+          </div>
+
           <label class="field">
             <span>Spielmodus</span>
             <select id="match-mode-select">
