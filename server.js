@@ -117,6 +117,8 @@ function createRoom(hostSocket, name, options = {}) {
     history: [],
     logicJudgement: null,
     demoNarration: null,
+    demoAttackCount: 0,
+    demoForcedHitDone: false,
     motionCue: null,
     cueId: 0,
     winnerSide: null,
@@ -273,6 +275,8 @@ function resetRoomForMatch(room) {
   room.history = [];
   room.winnerSide = null;
   room.logicJudgement = null;
+  room.demoAttackCount = 0;
+  room.demoForcedHitDone = false;
 
   room.order.forEach((playerId) => {
     const player = room.players.get(playerId);
@@ -800,6 +804,9 @@ function performCardPlay(room, playerId, cardId) {
       displayText: card.title,
       text: card.hook
     };
+    if (room.matchMode === "demo") {
+      room.demoAttackCount += 1;
+    }
     room.phase = "defend";
     room.activePlayerId = defenderId;
     room.statusText = `${player.name} greift mit "${card.title}" an.`;
@@ -841,7 +848,11 @@ function performCardPlay(room, playerId, cardId) {
   const attackCard = CARD_LIBRARY[room.pendingAttack.cardId];
   const attacker = room.players.get(room.pendingAttack.attackerId);
   const defender = player;
-  const valid = attackCard.validCounters.includes(card.id);
+  const forceDemoHit = room.matchMode === "demo" && !room.demoForcedHitDone && room.demoAttackCount >= 4;
+  const valid = forceDemoHit ? false : attackCard.validCounters.includes(card.id);
+  if (forceDemoHit) {
+    room.demoForcedHitDone = true;
+  }
   room.logicJudgement = evaluateDefense(attackCard, card, valid);
 
   if (valid) {
@@ -952,6 +963,9 @@ function performTextMove(room, playerId, rawText) {
       displayText: excerptText(text, 78),
       inferenceConfidence: inference.confidence
     };
+    if (room.matchMode === "demo") {
+      room.demoAttackCount += 1;
+    }
     room.phase = "defend";
     room.activePlayerId = defenderId;
     room.statusText = `${player.name} bringt ein Freitext-Argument an.`;
@@ -997,11 +1011,23 @@ function performTextMove(room, playerId, rawText) {
     attackSide: attacker.side,
     defenseSide: defender.side
   });
-  room.logicJudgement = evaluation.judgement;
+  const forceDemoHit = room.matchMode === "demo" && !room.demoForcedHitDone && room.demoAttackCount >= 4;
+  const isValid = forceDemoHit ? false : evaluation.isValid;
+  if (forceDemoHit) {
+    room.demoForcedHitDone = true;
+  }
+  room.logicJudgement = forceDemoHit
+    ? {
+        ...evaluation.judgement,
+        verdict: "nicht ausreichend",
+        summary:
+          "In der Demo kippt die vierte Abwehr bewusst in einen Volltreffer, damit die Folgen einer misslungenen Reaktion sichtbar werden."
+      }
+    : evaluation.judgement;
   const attackLabel = getPendingAttackLabel(room.pendingAttack);
   const defenseLabel = excerptText(text, 78);
 
-  if (evaluation.isValid) {
+  if (isValid) {
     room.phase = "attack";
     room.activePlayerId = defender.id;
     room.pendingAttack = null;
@@ -1105,6 +1131,16 @@ function chooseBotCard(room, bot) {
     const attackCard = CARD_LIBRARY[room.pendingAttack.cardId];
     const validCounters = attackCard.validCounters.filter((cardId) => available.includes(cardId));
     const invalidCounters = available.filter((cardId) => !validCounters.includes(cardId));
+    const forceDemoHit =
+      room.matchMode === "demo" &&
+      !room.demoForcedHitDone &&
+      room.demoAttackCount >= 4 &&
+      invalidCounters.length > 0;
+
+    if (forceDemoHit) {
+      return CARD_LIBRARY[pickRandom(invalidCounters)];
+    }
+
     const preferValid = validCounters.length > 0 && Math.random() < 0.78;
     const choicePool = preferValid
       ? validCounters

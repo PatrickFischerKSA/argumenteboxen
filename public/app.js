@@ -15,6 +15,7 @@ const state = {
   compressor: null,
   noiseBuffer: null,
   effectSamples: {},
+  effectSampleLoads: {},
   crowdSource: null,
   crowdFilter: null,
   crowdGain: null,
@@ -265,14 +266,20 @@ function primeArenaAudio() {
 
 function primeEffectSamples() {
   Object.entries(SOUND_FILES).forEach(([name, src]) => {
-    if (state.effectSamples[name]) {
+    if (state.effectSamples[name] || state.effectSampleLoads[name] || !state.audioCtx) {
       return;
     }
 
-    const audio = new Audio(src);
-    audio.preload = "auto";
-    audio.load();
-    state.effectSamples[name] = audio;
+    state.effectSampleLoads[name] = fetch(src)
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => state.audioCtx.decodeAudioData(buffer))
+      .then((decoded) => {
+        state.effectSamples[name] = decoded;
+        delete state.effectSampleLoads[name];
+      })
+      .catch(() => {
+        delete state.effectSampleLoads[name];
+      });
   });
 }
 
@@ -280,12 +287,11 @@ function playSample(
   name,
   { volume = 1, delay = 0, layers = 1, staggerMs = 40, rate = 1, rateStep = 0.04 } = {}
 ) {
-  if (!state.audioEnabled) {
+  if (!state.audioEnabled || !ensureAudio()) {
     return;
   }
 
-  const base = state.effectSamples[name];
-  if (!base) {
+  if (!state.effectSamples[name] && !state.effectSampleLoads[name]) {
     primeEffectSamples();
   }
 
@@ -295,13 +301,15 @@ function playSample(
   }
 
   for (let index = 0; index < layers; index += 1) {
-    window.setTimeout(() => {
-      const clone = sample.cloneNode();
-      clone.volume = Math.min(1, volume);
-      clone.playbackRate = Math.max(0.7, rate + index * rateStep);
-      clone.currentTime = 0;
-      clone.play().catch(() => {});
-    }, delay + index * staggerMs);
+    const source = state.audioCtx.createBufferSource();
+    const gainNode = state.audioCtx.createGain();
+    const playbackRate = Math.max(0.65, rate + index * rateStep);
+    source.buffer = sample;
+    source.playbackRate.setValueAtTime(playbackRate, state.audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(volume, state.audioCtx.currentTime);
+    source.connect(gainNode);
+    gainNode.connect(state.masterGain);
+    source.start(state.audioCtx.currentTime + (delay + index * staggerMs) / 1000);
   }
 }
 
@@ -410,15 +418,6 @@ function startCrowdAmbience() {
 }
 
 function syncArenaAmbience() {
-  if (
-    state.audioEnabled &&
-    state.room &&
-    (state.room.status === "active" || state.room.status === "finished")
-  ) {
-    startCrowdAmbience();
-    return;
-  }
-
   stopCrowdAmbience();
 }
 
@@ -546,9 +545,9 @@ function playHitCrack(strength = 1) {
 
 function playImpactSound(strength = 1) {
   playSample("hit", {
-    volume: Math.min(1, 0.68 + strength * 0.18),
-    layers: strength >= 2 ? 4 : 2,
-    staggerMs: strength >= 2 ? 18 : 24,
+    volume: 1.2 + strength * 0.36,
+    layers: strength >= 2 ? 5 : 3,
+    staggerMs: strength >= 2 ? 14 : 20,
     rate: strength >= 2 ? 0.92 : 0.98,
     rateStep: 0.03
   });
@@ -586,7 +585,7 @@ function playBellStrike({ delay = 0, base = 1040, gain = 0.34 } = {}) {
 }
 
 function playGongSound() {
-  playSample("gong", { volume: 1, layers: 3, staggerMs: 54, rate: 0.96, rateStep: -0.03 });
+  playSample("gong", { volume: 2.2, layers: 4, staggerMs: 42, rate: 0.94, rateStep: -0.03 });
   playBellStrike({ delay: 0, base: 1180, gain: 0.56 });
   playBellStrike({ delay: 58, base: 1100, gain: 0.46 });
   playBellStrike({ delay: 126, base: 1020, gain: 0.36 });
@@ -599,7 +598,7 @@ function playGongSound() {
 }
 
 function playKoSound() {
-  playSample("ko", { volume: 1, layers: 3, staggerMs: 28, rate: 0.94, rateStep: -0.04 });
+  playSample("ko", { volume: 2.4, layers: 4, staggerMs: 22, rate: 0.92, rateStep: -0.05 });
   playImpactSound(3.2);
   window.setTimeout(() => {
     pulseTone({ frequency: 120, slideTo: 30, duration: 1.06, type: "sawtooth", gain: 0.88 });
@@ -649,7 +648,7 @@ function playCrowdChant({ delay = 0, gain = 0.14 } = {}) {
 function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
   for (let index = 0; index < count; index += 1) {
     window.setTimeout(() => {
-      playSample("clap", { volume: Math.min(1, gain * 2.8), rate: 1 + index * 0.01 });
+      playSample("clap", { volume: 1.2 + gain * 3.4, layers: 2, staggerMs: 12, rate: 0.98 + index * 0.01 });
       playNoiseBurst({
         duration: 0.045,
         gain,
@@ -664,7 +663,7 @@ function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
 }
 
 function playCrowdWhistle() {
-  playSample("whistle", { volume: 1, layers: 2, staggerMs: 120, rate: 0.98, rateStep: 0.06 });
+  playSample("whistle", { volume: 2.1, layers: 3, staggerMs: 90, rate: 0.96, rateStep: 0.05 });
   pulseTone({ frequency: 1820, slideTo: 1440, duration: 0.26, type: "triangle", gain: 0.38 });
   pulseTone({ frequency: 2460, slideTo: 1980, duration: 0.18, type: "square", gain: 0.18 });
   window.setTimeout(() => {
@@ -676,9 +675,9 @@ function playCrowdWhistle() {
 }
 
 function playCrowdCheer() {
-  playSample("crowdCall", { volume: 1, delay: 18, rate: 1.04 });
-  playSample("crowdCall2", { volume: 0.96, delay: 110, rate: 1.08 });
-  playCrowdRoar({ gain: 0.07, duration: 0.52, highpass: 260, lowpass: 3400 });
+  playSample("crowdCall", { volume: 2.8, delay: 18, layers: 2, staggerMs: 90, rate: 1.02, rateStep: 0.03 });
+  playSample("crowdCall2", { volume: 2.5, delay: 110, layers: 2, staggerMs: 110, rate: 1.06, rateStep: 0.04 });
+  playCrowdRoar({ gain: 0.02, duration: 0.46, highpass: 260, lowpass: 3200 });
   playCrowdClaps(10, 78, 0.24);
   playCrowdYell({ frequency: 660, slideTo: 1040, duration: 0.3, gain: 0.32, delay: 12 });
   playCrowdYell({ frequency: 820, slideTo: 1320, duration: 0.24, gain: 0.24, delay: 96 });
