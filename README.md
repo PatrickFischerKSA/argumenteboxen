@@ -11,10 +11,13 @@ Zwei Kängurus treten als `Pro` und `Contra` im Ring gegeneinander an. Ein Angri
 ## Highlights
 
 - Lokales Multiplayer-Duell für zwei Browser auf zwei verschiedenen Computern
+- Solo-Modus gegen einen Computergegner
 - Klare `Pro`- und `Contra`-Argumentkarten aus der Materialsammlung zum Promotionsfach Sport
 - Schnelle Arena-Animationen mit Angriff, Parade, Treffer und KO
+- Zuschaltbare Hintergrundmusik aus der bereitgestellten MP3-Datei
 - Schaltbare Browser-Sounds für Glocke, Schläge und Volltreffer
 - 30-Sekunden-Zugtimer für Angriff und Abwehr
+- Level 2 mit Freitext-Eingabe und 90-Sekunden-Zugtimer
 - Revanche im selben Raum ohne neues Setup
 - Integriertes Logikraster mit Schlussarten und Fehlschluss-Prüfung aus dem Dossier zur Argumentationslehre
 - Komplett getrenntes Projekt, nicht mit anderen Workspace-Apps vermischt
@@ -28,6 +31,13 @@ Zwei Kängurus treten als `Pro` und `Contra` im Ring gegeneinander an. Ein Angri
 - Angriff zu spät: Initiative wechselt ohne Treffer
 - Abwehr zu spät: Volltreffer für die angreifende Seite
 - Drei Volltreffer: KO
+
+Zusätzlich gibt es jetzt zwei Spielwege:
+
+- `Level 1`: klassischer Kartenkampf mit 30 Sekunden pro Zug
+- `Level 2`: Freitext-Duell mit eigener Formulierung und 90 Sekunden pro Zug
+
+Der `Solo-Modus` setzt dabei die Contra-Seite automatisch mit einem Computergegner.
 
 Damit wird die Debatte nicht nur gesammelt, sondern als kompetitives Argumenteduell inszeniert.
 

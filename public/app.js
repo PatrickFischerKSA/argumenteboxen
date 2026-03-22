@@ -2,10 +2,12 @@ const state = {
   ws: null,
   room: null,
   selectedCardId: null,
+  textDraft: "",
   lastCueId: null,
   timerInterval: null,
   motionResetTimer: null,
   audioEnabled: false,
+  musicEnabled: false,
   audioCtx: null,
   masterGain: null,
   bubbleTimers: {
@@ -17,11 +19,26 @@ const state = {
 const els = {
   nameInput: document.getElementById("name-input"),
   roomCodeInput: document.getElementById("room-code-input"),
+  matchModeSelect: document.getElementById("match-mode-select"),
+  playLevelSelect: document.getElementById("play-level-select"),
+  joinBox: document.getElementById("join-box"),
   createRoomBtn: document.getElementById("create-room-btn"),
   joinRoomBtn: document.getElementById("join-room-btn"),
   startMatchBtn: document.getElementById("start-match-btn"),
+  musicToggleBtn: document.getElementById("music-toggle-btn"),
   audioToggleBtn: document.getElementById("audio-toggle-btn"),
   playCardBtn: document.getElementById("play-card-btn"),
+  submitTextBtn: document.getElementById("submit-text-btn"),
+  textMoveInput: document.getElementById("text-move-input"),
+  textMoveLabel: document.getElementById("text-move-label"),
+  textCharCount: document.getElementById("text-char-count"),
+  textModePanel: document.getElementById("text-mode-panel"),
+  cardsModePanel: document.getElementById("cards-mode-panel"),
+  ideasGrid: document.getElementById("ideas-grid"),
+  modeChip: document.getElementById("mode-chip"),
+  opponentChip: document.getElementById("opponent-chip"),
+  roomMeta: document.getElementById("room-meta"),
+  actionPanelTitle: document.getElementById("action-panel-title"),
   notice: document.getElementById("notice"),
   roomCodeDisplay: document.getElementById("room-code-display"),
   statusLine: document.getElementById("status-line"),
@@ -41,11 +58,39 @@ const els = {
   fighterContraName: document.getElementById("fighter-contra-name"),
   bubblePro: document.getElementById("bubble-pro"),
   bubbleContra: document.getElementById("bubble-contra"),
+  bgMusic: document.getElementById("bg-music"),
   arenaImpact: document.getElementById("arena-impact"),
   arenaAnnouncer: document.getElementById("arena-announcer"),
   hitTrackPro: document.getElementById("hit-track-pro"),
   hitTrackContra: document.getElementById("hit-track-contra")
 };
+
+function currentConfiguredTurnMs() {
+  if (state.room?.turnTimeMs) {
+    return state.room.turnTimeMs;
+  }
+
+  return els.playLevelSelect.value === "free_text" ? 90_000 : 30_000;
+}
+
+function setupNoticeText() {
+  if (els.matchModeSelect.value === "solo") {
+    return els.playLevelSelect.value === "free_text"
+      ? "Im Solo-Modus spielt ein Computer direkt gegen dich. Im Freitext-Level formuliert ihr Argumente mit je 90 Sekunden Zugzeit."
+      : "Im Solo-Modus erstellt nur ein Gerät den Raum. Der Computer übernimmt automatisch die Gegenseite.";
+  }
+
+  return els.playLevelSelect.value === "free_text"
+    ? "Beide Spieler*innen spielen im Browser auf demselben Server. Im zweiten Level argumentiert ihr per Texteingabe mit je 90 Sekunden Zugzeit."
+    : "Beide Spieler*innen spielen im Browser auf demselben Server, aber auf zwei verschiedenen Computern.";
+}
+
+function updateSetupOptions() {
+  const solo = els.matchModeSelect.value === "solo";
+  els.joinBox.classList.toggle("hidden", solo);
+  showNotice(setupNoticeText(), "success");
+  clearTimerDisplay();
+}
 
 function connect() {
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -58,8 +103,21 @@ function connect() {
       return;
     }
 
+    const previousRoom = state.room;
     state.room = payload;
     syncSelection();
+
+    if (
+      previousRoom?.playLevel === "free_text" &&
+      previousRoom?.user &&
+      previousRoom.activePlayerId === previousRoom.user.id &&
+      payload.motionCue &&
+      payload.motionCue.id !== previousRoom.motionCue?.id
+    ) {
+      state.textDraft = "";
+      els.textMoveInput.value = "";
+    }
+
     render();
     maybePlayMotionCue(payload.motionCue);
   });
@@ -105,14 +163,38 @@ function ensureAudio() {
 }
 
 function updateAudioButton() {
-  els.audioToggleBtn.textContent = state.audioEnabled ? "Sound an" : "Sound aus";
+  els.audioToggleBtn.textContent = state.audioEnabled ? "Effekte aus" : "Effekte an";
+}
+
+function updateMusicButton() {
+  els.musicToggleBtn.textContent = state.musicEnabled ? "Musik aus" : "Musik an";
+}
+
+async function setMusicEnabled(enabled) {
+  state.musicEnabled = enabled;
+  els.bgMusic.volume = 0.22;
+
+  if (!enabled) {
+    els.bgMusic.pause();
+    updateMusicButton();
+    return;
+  }
+
+  try {
+    await els.bgMusic.play();
+  } catch (error) {
+    state.musicEnabled = false;
+    showNotice("Die Hintergrundmusik konnte in diesem Browser nicht gestartet werden.", "error");
+  }
+
+  updateMusicButton();
 }
 
 function clearTimerDisplay() {
   window.clearInterval(state.timerInterval);
   state.timerInterval = null;
   els.turnTimer.classList.add("hidden");
-  els.turnTimerLabel.textContent = "30s";
+  els.turnTimerLabel.textContent = `${Math.ceil(currentConfiguredTurnMs() / 1000)}s`;
   els.turnTimerFill.style.width = "100%";
   els.turnTimerFill.classList.remove("warning");
 }
@@ -193,7 +275,7 @@ function playCueSound(cue) {
     return;
   }
 
-  if (cue.type === "hit") {
+  if (cue.type === "hit" || cue.type === "timeout-hit") {
     pulseTone({ frequency: 170, slideTo: 80, duration: 0.24, type: "square", gain: 0.18 });
     return;
   }
@@ -221,10 +303,6 @@ function playerBySide(side) {
   return state.room?.players?.find((player) => player.side === side) || null;
 }
 
-function activePlayer() {
-  return state.room?.players?.find((player) => player.id === state.room.activePlayerId) || null;
-}
-
 function canAct() {
   return Boolean(
     state.room &&
@@ -234,13 +312,25 @@ function canAct() {
   );
 }
 
+function isFreeTextLevel() {
+  return state.room?.playLevel === "free_text";
+}
+
 function currentActionLabel() {
   if (!state.room || !state.room.user) {
-    return "Wähle ein Argument, sobald du am Zug bist.";
+    return "Wähle einen Modus und tritt der Arena bei.";
   }
 
   if (state.room.status !== "active") {
-    return "Deine Hand ist bereit, sobald das Match startet.";
+    return isFreeTextLevel()
+      ? "Das Textfeld wird aktiv, sobald das Match startet."
+      : "Deine Hand ist bereit, sobald das Match startet.";
+  }
+
+  if (isFreeTextLevel()) {
+    return state.room.phase === "attack"
+      ? "Du bist im Angriff: Formuliere dein Argument im Textfeld."
+      : "Du verteidigst: Tippe ein Gegenargument gegen den laufenden Angriff.";
   }
 
   return state.room.phase === "attack"
@@ -249,7 +339,7 @@ function currentActionLabel() {
 }
 
 function syncSelection() {
-  if (!state.room) {
+  if (!state.room || isFreeTextLevel()) {
     state.selectedCardId = null;
     return;
   }
@@ -270,11 +360,68 @@ function renderHitTrack(side) {
   }).join("");
 }
 
+function renderIdeas(cards) {
+  if (!cards.length) {
+    els.ideasGrid.innerHTML = "<p class='history-empty'>Sobald du im Raum bist, erscheinen hier Argument-Ideen deiner Seite.</p>";
+    return;
+  }
+
+  els.ideasGrid.innerHTML = cards
+    .map(
+      (card) => `
+        <article class="idea-card ${card.side}">
+          <span class="card-tag">Impuls</span>
+          <h3>${escapeHtml(card.title)}</h3>
+          <p>${escapeHtml(card.hook)}</p>
+          <p><strong>Logik:</strong> ${escapeHtml(card.logicLabel)} · ${escapeHtml(card.logicValidity)}</p>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function updatePlayButton() {
+  const selected = state.room?.yourHand?.find((card) => card.id === state.selectedCardId);
+  const enabled = canAct() && selected && !selected.used;
+  els.playCardBtn.disabled = !enabled;
+  if (!enabled) {
+    els.playCardBtn.textContent = state.room?.phase === "defend" ? "Gegenargument spielen" : "Karte spielen";
+    return;
+  }
+
+  els.playCardBtn.textContent =
+    state.room.phase === "defend" ? `Abwehren mit: ${selected.title}` : `Angreifen mit: ${selected.title}`;
+}
+
+function updateTextControls() {
+  const draft = state.textDraft.trim();
+  const enoughText = draft.length >= 18;
+  const attackMode = state.room?.phase !== "defend";
+  els.textMoveLabel.textContent = attackMode ? "Dein Argument" : "Dein Gegenargument";
+  els.textMoveInput.placeholder = attackMode
+    ? "Formuliere hier dein Angriffsargument."
+    : "Formuliere hier deine Abwehr gegen den laufenden Angriff.";
+  els.textCharCount.textContent = String(state.textDraft.length);
+  els.submitTextBtn.disabled = !(canAct() && enoughText);
+  els.submitTextBtn.textContent = attackMode ? "Argument abschicken" : "Gegenargument abschicken";
+}
+
 function renderCards() {
   const cards = state.room?.yourHand || [];
-  const canPlay = canAct();
   els.handCaption.textContent = currentActionLabel();
+  const textLevel = isFreeTextLevel();
 
+  els.cardsModePanel.classList.toggle("hidden", textLevel);
+  els.textModePanel.classList.toggle("hidden", !textLevel);
+  els.actionPanelTitle.textContent = textLevel ? "Dein Textzug" : "Deine Karten";
+
+  if (textLevel) {
+    renderIdeas(cards);
+    updateTextControls();
+    return;
+  }
+
+  const canPlay = canAct();
   if (!cards.length) {
     els.cardsGrid.innerHTML = "<p class='history-empty'>Deine Hand erscheint, sobald du einem Raum beigetreten bist.</p>";
     els.playCardBtn.disabled = true;
@@ -313,19 +460,6 @@ function renderCards() {
   });
 
   updatePlayButton();
-}
-
-function updatePlayButton() {
-  const selected = state.room?.yourHand?.find((card) => card.id === state.selectedCardId);
-  const enabled = canAct() && selected && !selected.used;
-  els.playCardBtn.disabled = !enabled;
-  if (!enabled) {
-    els.playCardBtn.textContent = state.room?.phase === "defend" ? "Gegenargument spielen" : "Karte spielen";
-    return;
-  }
-
-  els.playCardBtn.textContent =
-    state.room.phase === "defend" ? `Abwehren mit: ${selected.title}` : `Angreifen mit: ${selected.title}`;
 }
 
 function renderHistory() {
@@ -426,6 +560,20 @@ function renderLogicPanel() {
   `;
 }
 
+function renderRoomMeta() {
+  const matchMode = state.room?.matchMode || els.matchModeSelect.value;
+  const playLevel = state.room?.playLevel || els.playLevelSelect.value;
+  const modeText = playLevel === "free_text" ? "Level 2: Freitextduell" : "Level 1: Kartenkampf";
+  const opponentText = matchMode === "solo" ? "Solo gegen Computer" : "Duell auf zwei Computern";
+
+  els.modeChip.textContent = modeText;
+  els.opponentChip.textContent = opponentText;
+  els.roomMeta.innerHTML = `
+    <span class="room-meta-pill">${escapeHtml(opponentText)}</span>
+    <span class="room-meta-pill alt">${escapeHtml(modeText)}</span>
+  `;
+}
+
 function renderStatus() {
   els.roomCodeDisplay.textContent = state.room?.roomCode || "-----";
   els.statusLine.textContent = state.room?.statusText || "Warte auf die Arena.";
@@ -433,6 +581,7 @@ function renderStatus() {
   const showStart = Boolean(state.room?.canStart || state.room?.canRematch);
   els.startMatchBtn.classList.toggle("hidden", !showStart);
   els.startMatchBtn.textContent = state.room?.canRematch ? "Revanche starten" : "Match starten";
+  renderRoomMeta();
   restartTimerLoop();
 }
 
@@ -567,7 +716,12 @@ function maybePlayMotionCue(cue) {
 els.createRoomBtn.addEventListener("click", () => {
   ensureAudio();
   const name = els.nameInput.value.trim();
-  send({ type: "create_room", name });
+  send({
+    type: "create_room",
+    name,
+    matchMode: els.matchModeSelect.value,
+    playLevel: els.playLevelSelect.value
+  });
 });
 
 els.joinRoomBtn.addEventListener("click", () => {
@@ -592,6 +746,26 @@ els.playCardBtn.addEventListener("click", () => {
   send({ type: "play_card", cardId: state.selectedCardId });
 });
 
+els.submitTextBtn.addEventListener("click", () => {
+  ensureAudio();
+  const text = state.textDraft.trim();
+  if (text.length < 18) {
+    showNotice("Bitte formuliere ein etwas ausführlicheres Argument.", "error");
+    return;
+  }
+
+  send({ type: "submit_text_move", text });
+});
+
+els.textMoveInput.addEventListener("input", () => {
+  state.textDraft = els.textMoveInput.value;
+  updateTextControls();
+});
+
+els.musicToggleBtn.addEventListener("click", async () => {
+  await setMusicEnabled(!state.musicEnabled);
+});
+
 els.audioToggleBtn.addEventListener("click", () => {
   if (!state.audioEnabled) {
     if (!ensureAudio()) {
@@ -605,5 +779,11 @@ els.audioToggleBtn.addEventListener("click", () => {
   updateAudioButton();
 });
 
+els.matchModeSelect.addEventListener("change", updateSetupOptions);
+els.playLevelSelect.addEventListener("change", updateSetupOptions);
+
 updateAudioButton();
+updateMusicButton();
+els.bgMusic.volume = 0.22;
+updateSetupOptions();
 connect();

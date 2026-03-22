@@ -10,12 +10,28 @@
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Argumentespiel für zwei Computer</p>
+          <p class="eyebrow">Argumentespiel zur aktuellen Bildungsdebatte</p>
           <h1>Schlagende Argumente</h1>
-          <p class="hero-copy">
-            Zwei Kängurus boxen sich mit Pro- und Contra-Argumenten durch die
-            Frage: Soll Sport ein Promotionsfach werden?
-          </p>
+          <div class="hero-copy-stack">
+            <p class="hero-copy">
+              Zwei Kängurus boxen sich mit Pro- und Contra-Argumenten durch die
+              Frage: Soll Sport ein Promotionsfach werden?
+            </p>
+            <p class="hero-copy">
+              Stand <strong>22. März 2026</strong> ist Sport nach aktuellem
+              Quellenstand an Gymnasien noch nirgends als
+              promotionswirksames Fach umgesetzt. Im Kanton Aargau laufen mit
+              <strong>Gymnasium 27+</strong> jedoch Arbeiten an Stundentafeln
+              und Promotionsbedingungen; ein promotionswirksames Fach Sport ist
+              dort bisher ebenfalls nicht eingeführt.
+            </p>
+            <p class="hero-copy">
+              An der <strong>FMS</strong> ist Sport dagegen seit Langem fest im
+              schulischen Fächerkanon verankert. Genau aus dieser Spannung
+              entsteht das Spiel: Was spricht dafür, Sport auch am Gymnasium
+              stärker zu gewichten, und was spricht dagegen?
+            </p>
+          </div>
         </div>
         <div class="hero-badge">
           <span>3 Volltreffer = KO</span>
@@ -35,11 +51,27 @@
             <input id="name-input" maxlength="24" placeholder="z. B. Team Rot" />
           </label>
 
+          <label class="field">
+            <span>Spielmodus</span>
+            <select id="match-mode-select">
+              <option value="duel">Duell auf zwei Computern</option>
+              <option value="solo">Solo gegen Computer</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Spiellevel</span>
+            <select id="play-level-select">
+              <option value="cards">Level 1: Kartenkampf (30 Sekunden)</option>
+              <option value="free_text">Level 2: Freitextduell (90 Sekunden)</option>
+            </select>
+          </label>
+
           <div class="setup-actions">
             <button id="create-room-btn" class="primary-btn">Neuen Raum erstellen</button>
           </div>
 
-          <div class="join-box">
+          <div class="join-box" id="join-box">
             <label class="field">
               <span>Raumcode</span>
               <input id="room-code-input" maxlength="5" placeholder="ABCDE" />
@@ -58,6 +90,7 @@
             <div>
               <p class="eyebrow">Raumcode</p>
               <div class="room-code" id="room-code-display">-----</div>
+              <div class="room-meta" id="room-meta"></div>
             </div>
             <div class="status-copy">
               <p class="status-line" id="status-line">Warte auf die Arena.</p>
@@ -73,7 +106,8 @@
               </div>
             </div>
             <div class="topbar-actions">
-              <button id="audio-toggle-btn" class="secondary-btn">Sound aus</button>
+              <button id="music-toggle-btn" class="secondary-btn">Musik an</button>
+              <button id="audio-toggle-btn" class="secondary-btn">Effekte an</button>
               <button id="start-match-btn" class="primary-btn hidden">Match starten</button>
             </div>
           </div>
@@ -128,12 +162,43 @@
 
           <div class="cards-section">
             <div class="panel-heading compact">
-              <h2>Deine Karten</h2>
+              <h2 id="action-panel-title">Deine Karten</h2>
               <p id="hand-caption">Wähle ein Argument, sobald du am Zug bist.</p>
             </div>
-            <div class="cards-grid" id="cards-grid"></div>
-            <div class="card-actions">
-              <button id="play-card-btn" class="primary-btn" disabled>Karte spielen</button>
+
+            <div class="mode-chip-row">
+              <span class="mode-chip" id="mode-chip">Level 1: Kartenkampf</span>
+              <span class="mode-chip alt" id="opponent-chip">Duellmodus</span>
+            </div>
+
+            <div id="cards-mode-panel">
+              <div class="cards-grid" id="cards-grid"></div>
+              <div class="card-actions">
+                <button id="play-card-btn" class="primary-btn" disabled>Karte spielen</button>
+              </div>
+            </div>
+
+            <div class="text-mode-panel hidden" id="text-mode-panel">
+              <label class="field text-move-field">
+                <span id="text-move-label">Dein Argument</span>
+                <textarea
+                  id="text-move-input"
+                  rows="5"
+                  maxlength="420"
+                  placeholder="Formuliere hier dein Argument oder Gegenargument."
+                ></textarea>
+              </label>
+              <div class="text-mode-actions">
+                <button id="submit-text-btn" class="primary-btn" disabled>Text abschicken</button>
+                <span class="text-counter"><strong id="text-char-count">0</strong>/420 Zeichen</span>
+              </div>
+              <div class="ideas-panel">
+                <div class="panel-heading compact">
+                  <h2>Argument-Ideen deiner Seite</h2>
+                  <p>Diese Karten dienen hier nur als Inspiration für den Freitext.</p>
+                </div>
+                <div class="ideas-grid" id="ideas-grid"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -174,6 +239,7 @@
       </main>
     </div>
 
+    <audio id="bg-music" src="./assets/audio/Georg-Kreisler-Sport-ist-gesund.mp3" preload="metadata" loop></audio>
     <script src="/app.js" defer></script>
   </body>
 </html>
