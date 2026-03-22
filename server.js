@@ -23,8 +23,7 @@ const CARD_TURN_TIME_MS = 30_000;
 const TEXT_TURN_TIME_MS = 90_000;
 const BOT_DELAY_MIN_MS = 900;
 const BOT_DELAY_MAX_MS = 1700;
-const DEMO_DELAY_MIN_MS = 4200;
-const DEMO_DELAY_MAX_MS = 5600;
+const DEMO_DELAY_MS = 6000;
 
 const app = express();
 const server = http.createServer(app);
@@ -69,7 +68,7 @@ function makeRoomCode() {
 
 function randomDelay(room) {
   if (room?.matchMode === "demo") {
-    return crypto.randomInt(DEMO_DELAY_MIN_MS, DEMO_DELAY_MAX_MS + 1);
+    return DEMO_DELAY_MS;
   }
 
   return crypto.randomInt(BOT_DELAY_MIN_MS, BOT_DELAY_MAX_MS + 1);
