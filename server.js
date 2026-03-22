@@ -23,8 +23,8 @@ const CARD_TURN_TIME_MS = 30_000;
 const TEXT_TURN_TIME_MS = 90_000;
 const BOT_DELAY_MIN_MS = 900;
 const BOT_DELAY_MAX_MS = 1700;
-const DEMO_DELAY_MIN_MS = 380;
-const DEMO_DELAY_MAX_MS = 760;
+const DEMO_DELAY_MIN_MS = 2200;
+const DEMO_DELAY_MAX_MS = 3400;
 
 const app = express();
 const server = http.createServer(app);
