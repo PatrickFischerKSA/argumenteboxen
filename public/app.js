@@ -13,6 +13,7 @@ const state = {
   musicEnabled: false,
   audioCtx: null,
   masterGain: null,
+  compressor: null,
   noiseBuffer: null,
   bubbleTimers: {
     pro: null,
@@ -217,9 +218,16 @@ function ensureAudio() {
   }
 
   state.audioCtx = new AudioContextClass();
+  state.compressor = state.audioCtx.createDynamicsCompressor();
+  state.compressor.threshold.setValueAtTime(-18, state.audioCtx.currentTime);
+  state.compressor.knee.setValueAtTime(20, state.audioCtx.currentTime);
+  state.compressor.ratio.setValueAtTime(10, state.audioCtx.currentTime);
+  state.compressor.attack.setValueAtTime(0.003, state.audioCtx.currentTime);
+  state.compressor.release.setValueAtTime(0.18, state.audioCtx.currentTime);
   state.masterGain = state.audioCtx.createGain();
-  state.masterGain.gain.value = 0.14;
-  state.masterGain.connect(state.audioCtx.destination);
+  state.masterGain.gain.value = 0.22;
+  state.masterGain.connect(state.compressor);
+  state.compressor.connect(state.audioCtx.destination);
   state.noiseBuffer = createNoiseBuffer(state.audioCtx);
   return true;
 }
@@ -373,45 +381,48 @@ function playNoiseBurst({
 }
 
 function playSwingSound() {
-  pulseTone({ frequency: 280, slideTo: 140, duration: 0.16, type: "sawtooth", gain: 0.08 });
-  playNoiseBurst({ duration: 0.12, gain: 0.04, highpass: 500, lowpass: 4200, release: 0.08 });
+  pulseTone({ frequency: 320, slideTo: 130, duration: 0.18, type: "sawtooth", gain: 0.12 });
+  playNoiseBurst({ duration: 0.14, gain: 0.08, highpass: 380, lowpass: 4600, release: 0.1 });
 }
 
 function playImpactSound() {
-  pulseTone({ frequency: 150, slideTo: 72, duration: 0.22, type: "square", gain: 0.19 });
-  pulseTone({ frequency: 88, slideTo: 52, duration: 0.28, type: "triangle", gain: 0.12 });
-  playNoiseBurst({ duration: 0.18, gain: 0.22, highpass: 140, lowpass: 1800, release: 0.14 });
+  pulseTone({ frequency: 164, slideTo: 68, duration: 0.24, type: "square", gain: 0.32 });
+  pulseTone({ frequency: 96, slideTo: 46, duration: 0.34, type: "triangle", gain: 0.22 });
+  playNoiseBurst({ duration: 0.22, gain: 0.34, highpass: 110, lowpass: 2100, release: 0.18 });
 }
 
 function playPainSound() {
-  pulseTone({ frequency: 620, slideTo: 410, duration: 0.11, type: "sawtooth", gain: 0.06 });
+  pulseTone({ frequency: 760, slideTo: 440, duration: 0.13, type: "sawtooth", gain: 0.11 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 560, slideTo: 320, duration: 0.14, type: "triangle", gain: 0.05 });
+    pulseTone({ frequency: 640, slideTo: 300, duration: 0.18, type: "triangle", gain: 0.09 });
   }, 40);
 }
 
 function playBlockSound() {
-  pulseTone({ frequency: 520, duration: 0.06, type: "square", gain: 0.08 });
+  pulseTone({ frequency: 560, duration: 0.08, type: "square", gain: 0.12 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 820, duration: 0.08, type: "triangle", gain: 0.06 });
+    pulseTone({ frequency: 980, duration: 0.1, type: "triangle", gain: 0.1 });
   }, 35);
-  playNoiseBurst({ duration: 0.08, gain: 0.05, highpass: 1200, lowpass: 5200, release: 0.06 });
+  playNoiseBurst({ duration: 0.1, gain: 0.09, highpass: 1400, lowpass: 5600, release: 0.08 });
 }
 
 function playGongSound() {
-  pulseTone({ frequency: 196, duration: 1.4, type: "sine", gain: 0.1 });
-  pulseTone({ frequency: 293, duration: 1.2, type: "triangle", gain: 0.06 });
+  pulseTone({ frequency: 196, duration: 1.8, type: "sine", gain: 0.18 });
+  pulseTone({ frequency: 293, duration: 1.55, type: "triangle", gain: 0.12 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 392, duration: 0.95, type: "triangle", gain: 0.05 });
-  }, 60);
-  playNoiseBurst({ duration: 0.42, gain: 0.08, highpass: 260, lowpass: 2600, release: 0.34 });
+    pulseTone({ frequency: 392, duration: 1.2, type: "triangle", gain: 0.1 });
+  }, 45);
+  window.setTimeout(() => {
+    pulseTone({ frequency: 784, duration: 0.75, type: "triangle", gain: 0.06 });
+  }, 20);
+  playNoiseBurst({ duration: 0.56, gain: 0.18, highpass: 240, lowpass: 4200, release: 0.46 });
 }
 
 function playKoSound() {
   playImpactSound();
   window.setTimeout(() => {
-    pulseTone({ frequency: 120, slideTo: 42, duration: 0.65, type: "sawtooth", gain: 0.18 });
-    playNoiseBurst({ duration: 0.34, gain: 0.12, highpass: 90, lowpass: 900, release: 0.28 });
+    pulseTone({ frequency: 120, slideTo: 38, duration: 0.78, type: "sawtooth", gain: 0.28 });
+    playNoiseBurst({ duration: 0.42, gain: 0.18, highpass: 70, lowpass: 1000, release: 0.34 });
   }, 55);
   window.setTimeout(() => {
     playPainSound();
