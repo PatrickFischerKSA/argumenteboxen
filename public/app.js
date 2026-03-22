@@ -46,6 +46,13 @@ const els = {
   turnTimer: document.getElementById("turn-timer"),
   turnTimerLabel: document.getElementById("turn-timer-label"),
   turnTimerFill: document.getElementById("turn-timer-fill"),
+  arenaStartOverlay: document.getElementById("arena-start-overlay"),
+  arenaStartEyebrow: document.getElementById("arena-start-eyebrow"),
+  arenaStartTitle: document.getElementById("arena-start-title"),
+  arenaStartCopy: document.getElementById("arena-start-copy"),
+  arenaStartBtn: document.getElementById("arena-start-btn"),
+  defenseHelper: document.getElementById("defense-helper"),
+  selectedCardPanel: document.getElementById("selected-card-panel"),
   cardsGrid: document.getElementById("cards-grid"),
   handCaption: document.getElementById("hand-caption"),
   historyList: document.getElementById("history-list"),
@@ -344,10 +351,67 @@ function syncSelection() {
     return;
   }
 
+  if (
+    state.room.status === "active" &&
+    state.room.phase === "defend" &&
+    state.room.pendingAttack?.validCounterIds?.length &&
+    state.room.user &&
+    state.room.activePlayerId === state.room.user.id
+  ) {
+    const selectedCard = state.room.yourHand.find((card) => card.id === state.selectedCardId);
+    const selectedIsRecommended =
+      selectedCard &&
+      !selectedCard.used &&
+      state.room.pendingAttack.validCounterIds.includes(selectedCard.id);
+
+    if (!selectedIsRecommended) {
+      const firstRecommended = state.room.yourHand.find(
+        (card) =>
+          !card.used && state.room.pendingAttack.validCounterIds.includes(card.id)
+      );
+      if (firstRecommended) {
+        state.selectedCardId = firstRecommended.id;
+        return;
+      }
+    }
+  }
+
   const selectedCard = state.room.yourHand.find((card) => card.id === state.selectedCardId);
   if (!selectedCard || selectedCard.used) {
     state.selectedCardId = null;
   }
+
+  if (!state.selectedCardId) {
+    const firstAvailable = state.room.yourHand.find((card) => !card.used);
+    if (firstAvailable) {
+      state.selectedCardId = firstAvailable.id;
+    }
+  }
+}
+
+function recommendedCounterIds() {
+  return state.room?.phase === "defend" ? state.room?.pendingAttack?.validCounterIds || [] : [];
+}
+
+function renderDefenseHelper(cards) {
+  const ids = recommendedCounterIds();
+  if (!ids.length || state.room?.playLevel !== "cards") {
+    els.defenseHelper.classList.add("hidden");
+    els.defenseHelper.innerHTML = "";
+    return;
+  }
+
+  const recommendedCards = cards.filter((card) => ids.includes(card.id) && !card.used);
+  const labels = recommendedCards.length
+    ? recommendedCards.map((card) => `<span class="helper-pill">${escapeHtml(card.title)}</span>`).join("")
+    : "<span class='history-empty'>Die passenden Karten sind bereits verbraucht.</span>";
+
+  els.defenseHelper.innerHTML = `
+    <strong>Gute Abwehr gegen: ${escapeHtml(state.room.pendingAttack?.card?.title || state.room.pendingAttack?.displayText || "aktuellen Angriff")}</strong>
+    <p>Die folgenden Gegenargumente passen direkt zum laufenden Angriff und sind deshalb hervorgehoben:</p>
+    <div class="helper-pill-row">${labels}</div>
+  `;
+  els.defenseHelper.classList.remove("hidden");
 }
 
 function renderHitTrack(side) {
@@ -380,9 +444,82 @@ function renderIdeas(cards) {
     .join("");
 }
 
+function sendSelectedCard(cardId) {
+  ensureAudio();
+  if (!cardId) {
+    showNotice("Wähle zuerst eine Karte aus.", "error");
+    return;
+  }
+
+  send({ type: "play_card", cardId });
+}
+
+function renderSelectedCardPanel(cards) {
+  if (!els.selectedCardPanel) {
+    return;
+  }
+
+  if (!cards.length) {
+    els.selectedCardPanel.innerHTML = "";
+    return;
+  }
+
+  const selected =
+    cards.find((card) => card.id === state.selectedCardId) ||
+    cards.find((card) => !card.used) ||
+    cards[0];
+
+  const recommended = recommendedCounterIds().includes(selected.id);
+  const attackMode = state.room?.phase !== "defend";
+  const canPlay = canAct() && !selected.used;
+  const buttonLabel = attackMode
+    ? "Ausgewähltes Argument pushen"
+    : recommended
+      ? "Passendes Gegenargument pushen"
+      : "Ausgewähltes Gegenargument pushen";
+
+  let note = "Wähle eine Karte aus dem Raster und pushe sie gezielt aus diesem Fokusfeld.";
+  if (selected.used) {
+    note = "Diese Karte wurde bereits verbraucht und kann nicht noch einmal gespielt werden.";
+  } else if (!canAct()) {
+    note = "Du bist gerade nicht am Zug. Deine nächste Karte kann hier aber schon vorbereitet werden.";
+  } else if (!attackMode && recommended) {
+    note = "Diese Karte trifft den laufenden Angriff direkt und ist als Abwehr besonders stark.";
+  } else if (!attackMode) {
+    note = "Diese Abwehr ist möglich, aber gegen den aktuellen Angriff eher riskant.";
+  } else {
+    note = "Diese Karte ist bereit für deinen nächsten Schlag in der Arena.";
+  }
+
+  els.selectedCardPanel.className = `selected-card-panel ${recommended ? "recommended" : ""}`.trim();
+  els.selectedCardPanel.innerHTML = `
+    <p class="eyebrow">${attackMode ? "Ausgewähltes Argument" : "Ausgewähltes Gegenargument"}</p>
+    <h3>${escapeHtml(selected.title)}</h3>
+    <p class="selected-card-summary">${escapeHtml(selected.hook)}</p>
+    <p class="card-logic"><strong>Logik:</strong> ${escapeHtml(selected.logicLabel)} · ${escapeHtml(selected.logicValidity)}</p>
+    <p class="selected-card-summary">${escapeHtml(selected.detail)}</p>
+    <div class="selected-card-actions">
+      <button class="primary-btn" id="selected-card-push-btn" ${canPlay ? "" : "disabled"}>
+        ${buttonLabel}
+      </button>
+      <span class="selected-card-note">${escapeHtml(note)}</span>
+    </div>
+  `;
+
+  const pushButton = document.getElementById("selected-card-push-btn");
+  if (pushButton) {
+    pushButton.addEventListener("click", () => {
+      state.selectedCardId = selected.id;
+      updatePlayButton();
+      sendSelectedCard(selected.id);
+    });
+  }
+}
+
 function updatePlayButton() {
   const selected = state.room?.yourHand?.find((card) => card.id === state.selectedCardId);
   const enabled = canAct() && selected && !selected.used;
+  const recommended = recommendedCounterIds().includes(selected?.id);
   els.playCardBtn.disabled = !enabled;
   if (!enabled) {
     els.playCardBtn.textContent = state.room?.phase === "defend" ? "Gegenargument spielen" : "Karte spielen";
@@ -390,7 +527,9 @@ function updatePlayButton() {
   }
 
   els.playCardBtn.textContent =
-    state.room.phase === "defend" ? `Abwehren mit: ${selected.title}` : `Angreifen mit: ${selected.title}`;
+    state.room.phase === "defend"
+      ? `${recommended ? "Passend abwehren mit" : "Riskant abwehren mit"}: ${selected.title}`
+      : `Angreifen mit: ${selected.title}`;
 }
 
 function updateTextControls() {
@@ -407,7 +546,7 @@ function updateTextControls() {
 }
 
 function renderCards() {
-  const cards = state.room?.yourHand || [];
+  const originalCards = state.room?.yourHand || [];
   els.handCaption.textContent = currentActionLabel();
   const textLevel = isFreeTextLevel();
 
@@ -416,36 +555,65 @@ function renderCards() {
   els.actionPanelTitle.textContent = textLevel ? "Dein Textzug" : "Deine Karten";
 
   if (textLevel) {
-    renderIdeas(cards);
+    renderIdeas(originalCards);
     updateTextControls();
     return;
   }
 
+  const recommendedIds = recommendedCounterIds();
+  const cards = [...originalCards].sort((left, right) => {
+    const leftRecommended = recommendedIds.includes(left.id) ? 1 : 0;
+    const rightRecommended = recommendedIds.includes(right.id) ? 1 : 0;
+    if (leftRecommended !== rightRecommended) {
+      return rightRecommended - leftRecommended;
+    }
+    if (left.used !== right.used) {
+      return Number(left.used) - Number(right.used);
+    }
+    return left.title.localeCompare(right.title, "de-CH");
+  });
+
   const canPlay = canAct();
+  renderDefenseHelper(originalCards);
   if (!cards.length) {
+    renderSelectedCardPanel([]);
     els.cardsGrid.innerHTML = "<p class='history-empty'>Deine Hand erscheint, sobald du einem Raum beigetreten bist.</p>";
     els.playCardBtn.disabled = true;
     return;
   }
 
+  renderSelectedCardPanel(cards);
+
   els.cardsGrid.innerHTML = cards
     .map((card) => {
       const classes = ["card", card.side];
+      const recommended = recommendedIds.includes(card.id);
       if (card.used) {
         classes.push("used");
       }
       if (card.id === state.selectedCardId) {
         classes.push("selected");
       }
+      if (recommended) {
+        classes.push("recommended");
+      } else if (state.room?.phase === "defend") {
+        classes.push("risky");
+      }
 
-      const locked = !canPlay || card.used;
+      const locked = card.used;
       return `
         <button class="${classes.join(" ")}" data-card-id="${card.id}" ${locked ? "disabled" : ""}>
-          <span class="card-tag">${state.room.phase === "attack" ? "Angriff" : "Abwehr"}</span>
+          <span class="card-tag">${state.room.phase === "attack" ? "Angriff" : recommended ? "Passende Abwehr" : "Abwehr"}</span>
           <h3>${escapeHtml(card.title)}</h3>
-          <p>${escapeHtml(card.hook)}</p>
-          <p><strong>Logik:</strong> ${escapeHtml(card.logicLabel)} · ${escapeHtml(card.logicValidity)}</p>
-          <p>${escapeHtml(card.detail)}</p>
+          <p class="card-summary">${escapeHtml(card.hook)}</p>
+          <p class="card-logic"><strong>Logik:</strong> ${escapeHtml(card.logicLabel)} · ${escapeHtml(card.logicValidity)}</p>
+          ${
+            state.room.phase === "defend"
+              ? `<p class="card-hint ${recommended ? "recommended" : "risky"}">${
+                  recommended ? "Direkt passend." : "Eher riskant."
+                }</p>`
+              : ""
+          }
         </button>
       `;
     })
@@ -453,7 +621,17 @@ function renderCards() {
 
   Array.from(els.cardsGrid.querySelectorAll("[data-card-id]")).forEach((button) => {
     button.addEventListener("click", () => {
-      state.selectedCardId = button.dataset.cardId;
+      const cardId = button.dataset.cardId;
+      const card = originalCards.find((entry) => entry.id === cardId);
+      const sameCard = state.selectedCardId === cardId;
+      const playable = canPlay && card && !card.used;
+
+      if (sameCard && playable) {
+        sendSelectedCard(cardId);
+        return;
+      }
+
+      state.selectedCardId = cardId;
       renderCards();
       updatePlayButton();
     });
@@ -578,15 +756,74 @@ function renderStatus() {
   els.roomCodeDisplay.textContent = state.room?.roomCode || "-----";
   els.statusLine.textContent = state.room?.statusText || "Warte auf die Arena.";
   els.promptLine.textContent = state.room?.prompt || "";
-  const showStart = Boolean(state.room?.canStart || state.room?.canRematch);
-  els.startMatchBtn.classList.toggle("hidden", !showStart);
-  els.startMatchBtn.textContent = state.room?.canRematch ? "Revanche starten" : "Match starten";
+  els.startMatchBtn.classList.add("hidden");
   renderRoomMeta();
   restartTimerLoop();
 }
 
+function renderStartOverlay() {
+  const room = state.room;
+  let eyebrow = "Arena bereit";
+  let title = "Raum anlegen";
+  let copy = "Erstelle links einen Raum oder tritt mit Code bei. Sobald beide Seiten bereit sind, beginnt der Kampf mit einem klaren Startsignal.";
+  let buttonText = "Kampf starten";
+  let showButton = false;
+
+  if (!room) {
+    els.arenaStartOverlay.classList.remove("hidden");
+    els.arenaStartEyebrow.textContent = eyebrow;
+    els.arenaStartTitle.textContent = title;
+    els.arenaStartCopy.textContent = copy;
+    els.arenaStartBtn.classList.add("hidden");
+    return;
+  }
+
+  if (room.status === "active") {
+    els.arenaStartOverlay.classList.add("hidden");
+    return;
+  }
+
+  if (room.status === "lobby") {
+    eyebrow = room.matchMode === "solo" ? "Solo-Modus" : "Vor dem Kampf";
+
+    if (room.canStart) {
+      title = room.matchMode === "solo" ? "Computer ist bereit" : "Beide Kängurus sind bereit";
+      copy =
+        room.matchMode === "solo"
+          ? "Du hast den Raum angelegt, die Gegenseite wird vom Computer übernommen. Starte den Kampf jetzt bewusst mit dem großen Startsignal."
+          : "Der Raum ist vollständig. Starte den Kampf jetzt bewusst mit dem großen Startsignal, damit beide Seiten denselben klaren Beginn erleben.";
+      buttonText = "Kampf starten";
+      showButton = true;
+    } else if (room.players?.length < 2) {
+      title = "Warte auf die Gegenseite";
+      copy = "Teile den Raumcode und lass die zweite Seite beitreten. Erst dann wird der Start freigegeben.";
+    } else {
+      title = "Warte auf das Startsignal";
+      copy = "Beide Seiten sind im Raum. Jetzt kann nur noch die Host-Seite den Kampf auslösen.";
+    }
+  } else if (room.status === "finished") {
+    eyebrow = "Match beendet";
+    title = room.winnerSide === "pro" ? "Pro gewinnt" : room.winnerSide === "contra" ? "Contra gewinnt" : "Match beendet";
+    if (room.canRematch) {
+      copy = "Wenn ihr noch einmal antreten wollt, startet die Revanche wieder bewusst mit einem klaren Signal.";
+      buttonText = "Revanche starten";
+      showButton = true;
+    } else {
+      copy = "Warte darauf, dass die Host-Seite eine Revanche auslöst.";
+    }
+  }
+
+  els.arenaStartEyebrow.textContent = eyebrow;
+  els.arenaStartTitle.textContent = title;
+  els.arenaStartCopy.textContent = copy;
+  els.arenaStartBtn.textContent = buttonText;
+  els.arenaStartBtn.classList.toggle("hidden", !showButton);
+  els.arenaStartOverlay.classList.remove("hidden");
+}
+
 function render() {
   renderStatus();
+  renderStartOverlay();
   renderPlayers();
   renderCards();
   renderHistory();
@@ -736,14 +973,13 @@ els.startMatchBtn.addEventListener("click", () => {
   send({ type: "start_match" });
 });
 
-els.playCardBtn.addEventListener("click", () => {
+els.arenaStartBtn.addEventListener("click", () => {
   ensureAudio();
-  if (!state.selectedCardId) {
-    showNotice("Wähle zuerst eine Karte aus.", "error");
-    return;
-  }
+  send({ type: "start_match" });
+});
 
-  send({ type: "play_card", cardId: state.selectedCardId });
+els.playCardBtn.addEventListener("click", () => {
+  sendSelectedCard(state.selectedCardId);
 });
 
 els.submitTextBtn.addEventListener("click", () => {

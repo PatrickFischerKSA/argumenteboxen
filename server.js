@@ -360,6 +360,10 @@ function serializePendingAttack(room) {
     attackerSide: room.pendingAttack.attackerSide,
     kind: room.pendingAttack.kind,
     card: room.pendingAttack.cardId ? getPublicCard(room.pendingAttack.cardId) : null,
+    validCounterIds:
+      room.pendingAttack.kind === "card" && room.pendingAttack.cardId
+        ? [...CARD_LIBRARY[room.pendingAttack.cardId].validCounters]
+        : [],
     text: room.pendingAttack.kind === "text" ? room.pendingAttack.text : null,
     displayText: room.pendingAttack.displayText
   };

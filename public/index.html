@@ -17,20 +17,25 @@
               Zwei Kängurus boxen sich mit Pro- und Contra-Argumenten durch die
               Frage: Soll Sport ein Promotionsfach werden?
             </p>
-            <p class="hero-copy">
-              Stand <strong>22. März 2026</strong> ist Sport nach aktuellem
-              Quellenstand an Gymnasien noch nirgends als
-              promotionswirksames Fach umgesetzt. Im Kanton Aargau laufen mit
-              <strong>Gymnasium 27+</strong> jedoch Arbeiten an Stundentafeln
-              und Promotionsbedingungen; ein promotionswirksames Fach Sport ist
-              dort bisher ebenfalls nicht eingeführt.
-            </p>
-            <p class="hero-copy">
-              An der <strong>FMS</strong> ist Sport dagegen seit Langem fest im
-              schulischen Fächerkanon verankert. Genau aus dieser Spannung
-              entsteht das Spiel: Was spricht dafür, Sport auch am Gymnasium
-              stärker zu gewichten, und was spricht dagegen?
-            </p>
+            <details class="hero-details">
+              <summary>Hintergrund zur Bildungsdebatte anzeigen</summary>
+              <div class="hero-details-body">
+                <p class="hero-copy">
+                  Stand <strong>22. März 2026</strong> ist Sport nach aktuellem
+                  Quellenstand an Gymnasien noch nirgends als
+                  promotionswirksames Fach umgesetzt. Im Kanton Aargau laufen mit
+                  <strong>Gymnasium 27+</strong> jedoch Arbeiten an Stundentafeln
+                  und Promotionsbedingungen; ein promotionswirksames Fach Sport ist
+                  dort bisher ebenfalls nicht eingeführt.
+                </p>
+                <p class="hero-copy">
+                  An der <strong>FMS</strong> ist Sport dagegen seit Langem fest im
+                  schulischen Fächerkanon verankert. Genau aus dieser Spannung
+                  entsteht das Spiel: Was spricht dafür, Sport auch am Gymnasium
+                  stärker zu gewichten, und was spricht dagegen?
+                </p>
+              </div>
+            </details>
           </div>
         </div>
         <div class="hero-badge">
@@ -112,92 +117,108 @@
             </div>
           </div>
 
-          <div class="arena" id="arena">
-            <div class="arena-lights"></div>
-            <div class="arena-impact" id="arena-impact" aria-hidden="true">
-              <img src="./assets/sprites/effect_pow.png" alt="" />
-            </div>
-            <div class="arena-announcer" id="arena-announcer">Arena bereit</div>
-
-            <div class="fighter pro" id="fighter-pro">
-              <div class="fighter-banner">
-                <span class="side-tag">PRO</span>
-                <strong id="fighter-pro-name">Känguru Rot</strong>
+          <div class="battle-stage">
+            <div class="arena" id="arena">
+              <div class="arena-lights"></div>
+              <div class="arena-impact" id="arena-impact" aria-hidden="true">
+                <img src="./assets/sprites/effect_pow.png" alt="" />
               </div>
-              <div class="speech-bubble" id="bubble-pro"></div>
-              <div class="roo-art" aria-hidden="true">
-                <div class="sprite-stack">
-                  <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_red_idle.png" alt="" />
-                  <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_red_punch.png" alt="" />
-                  <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_red_hit.png" alt="" />
+              <div class="arena-announcer" id="arena-announcer">Arena bereit</div>
+              <div class="arena-start-overlay hidden" id="arena-start-overlay">
+                <div class="arena-start-card">
+                  <p class="eyebrow" id="arena-start-eyebrow">Arena bereit</p>
+                  <h3 id="arena-start-title">Raum anlegen</h3>
+                  <p id="arena-start-copy">
+                    Erstelle links einen Raum oder tritt mit Code bei. Sobald beide Seiten bereit sind,
+                    beginnt der Kampf mit einem klaren Startsignal.
+                  </p>
+                  <button id="arena-start-btn" class="primary-btn hidden">Kampf starten</button>
                 </div>
               </div>
-              <div class="hit-track" id="hit-track-pro"></div>
-            </div>
 
-            <div class="arena-center">
-              <div class="topic-card">
-                <p class="eyebrow">Streitfrage</p>
-                <h2>Soll Sport ein Promotionsfach werden?</h2>
-                <p>Valide Abwehr wechselt die Initiative. Drei Treffer bedeuten KO.</p>
+              <div class="fighter pro" id="fighter-pro">
+                <div class="fighter-banner">
+                  <span class="side-tag">PRO</span>
+                  <strong id="fighter-pro-name">Känguru Rot</strong>
+                </div>
+                <div class="speech-bubble" id="bubble-pro"></div>
+                <div class="roo-art" aria-hidden="true">
+                  <div class="sprite-stack">
+                    <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_red_idle.png" alt="" />
+                    <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_red_punch.png" alt="" />
+                    <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_red_hit.png" alt="" />
+                  </div>
+                </div>
+                <div class="hit-track" id="hit-track-pro"></div>
               </div>
-            </div>
 
-            <div class="fighter contra" id="fighter-contra">
-              <div class="fighter-banner">
-                <span class="side-tag">CONTRA</span>
-                <strong id="fighter-contra-name">Känguru Blau</strong>
-              </div>
-              <div class="speech-bubble" id="bubble-contra"></div>
-              <div class="roo-art" aria-hidden="true">
-                <div class="sprite-stack">
-                  <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_blue_idle.png" alt="" />
-                  <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_blue_punch.png" alt="" />
-                  <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_blue_hit.png" alt="" />
+              <div class="arena-center">
+                <div class="topic-card">
+                  <p class="eyebrow">Streitfrage</p>
+                  <h2>Soll Sport ein Promotionsfach werden?</h2>
+                  <p>Valide Abwehr wechselt die Initiative. Drei Treffer bedeuten KO.</p>
                 </div>
               </div>
-              <div class="hit-track" id="hit-track-contra"></div>
-            </div>
-          </div>
 
-          <div class="cards-section">
-            <div class="panel-heading compact">
-              <h2 id="action-panel-title">Deine Karten</h2>
-              <p id="hand-caption">Wähle ein Argument, sobald du am Zug bist.</p>
-            </div>
-
-            <div class="mode-chip-row">
-              <span class="mode-chip" id="mode-chip">Level 1: Kartenkampf</span>
-              <span class="mode-chip alt" id="opponent-chip">Duellmodus</span>
-            </div>
-
-            <div id="cards-mode-panel">
-              <div class="cards-grid" id="cards-grid"></div>
-              <div class="card-actions">
-                <button id="play-card-btn" class="primary-btn" disabled>Karte spielen</button>
-              </div>
-            </div>
-
-            <div class="text-mode-panel hidden" id="text-mode-panel">
-              <label class="field text-move-field">
-                <span id="text-move-label">Dein Argument</span>
-                <textarea
-                  id="text-move-input"
-                  rows="5"
-                  maxlength="420"
-                  placeholder="Formuliere hier dein Argument oder Gegenargument."
-                ></textarea>
-              </label>
-              <div class="text-mode-actions">
-                <button id="submit-text-btn" class="primary-btn" disabled>Text abschicken</button>
-                <span class="text-counter"><strong id="text-char-count">0</strong>/420 Zeichen</span>
-              </div>
-              <div class="ideas-panel">
-                <div class="panel-heading compact">
-                  <h2>Argument-Ideen deiner Seite</h2>
-                  <p>Diese Karten dienen hier nur als Inspiration für den Freitext.</p>
+              <div class="fighter contra" id="fighter-contra">
+                <div class="fighter-banner">
+                  <span class="side-tag">CONTRA</span>
+                  <strong id="fighter-contra-name">Känguru Blau</strong>
                 </div>
-                <div class="ideas-grid" id="ideas-grid"></div>
+                <div class="speech-bubble" id="bubble-contra"></div>
+                <div class="roo-art" aria-hidden="true">
+                  <div class="sprite-stack">
+                    <img class="roo-sprite sprite-idle" src="./assets/sprites/kangaroo_blue_idle.png" alt="" />
+                    <img class="roo-sprite sprite-punch" src="./assets/sprites/kangaroo_blue_punch.png" alt="" />
+                    <img class="roo-sprite sprite-hit" src="./assets/sprites/kangaroo_blue_hit.png" alt="" />
+                  </div>
+                </div>
+                <div class="hit-track" id="hit-track-contra"></div>
+              </div>
+
+            </div>
+
+            <div class="cards-section">
+              <div class="panel-heading compact">
+                <h2 id="action-panel-title">Deine Karten</h2>
+                <p id="hand-caption">Wähle ein Argument, sobald du am Zug bist.</p>
+              </div>
+
+              <div class="mode-chip-row">
+                <span class="mode-chip" id="mode-chip">Level 1: Kartenkampf</span>
+                <span class="mode-chip alt" id="opponent-chip">Duellmodus</span>
+              </div>
+
+              <div id="cards-mode-panel">
+                <div class="defense-helper hidden" id="defense-helper"></div>
+                <div class="selected-card-panel" id="selected-card-panel"></div>
+                <div class="cards-grid" id="cards-grid"></div>
+                <div class="card-actions">
+                  <button id="play-card-btn" class="primary-btn" disabled>Karte spielen</button>
+                </div>
+              </div>
+
+              <div class="text-mode-panel hidden" id="text-mode-panel">
+                <label class="field text-move-field">
+                  <span id="text-move-label">Dein Argument</span>
+                  <textarea
+                    id="text-move-input"
+                    rows="5"
+                    maxlength="420"
+                    placeholder="Formuliere hier dein Argument oder Gegenargument."
+                  ></textarea>
+                </label>
+                <div class="text-mode-actions">
+                  <button id="submit-text-btn" class="primary-btn" disabled>Text abschicken</button>
+                  <span class="text-counter"><strong id="text-char-count">0</strong>/420 Zeichen</span>
+                </div>
+                <div class="ideas-panel">
+                  <div class="panel-heading compact">
+                    <h2>Argument-Ideen deiner Seite</h2>
+                    <p>Diese Karten dienen hier nur als Inspiration für den Freitext.</p>
+                  </div>
+                  <div class="ideas-grid" id="ideas-grid"></div>
+                </div>
               </div>
             </div>
           </div>
