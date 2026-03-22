@@ -10,7 +10,6 @@ const state = {
   motionResetTimer: null,
   audioEnabled: false,
   audioManuallyDisabled: false,
-  musicEnabled: false,
   audioCtx: null,
   masterGain: null,
   compressor: null,
@@ -39,7 +38,6 @@ const els = {
   createRoomBtn: document.getElementById("create-room-btn"),
   joinRoomBtn: document.getElementById("join-room-btn"),
   startMatchBtn: document.getElementById("start-match-btn"),
-  musicToggleBtn: document.getElementById("music-toggle-btn"),
   audioToggleBtn: document.getElementById("audio-toggle-btn"),
   playCardBtn: document.getElementById("play-card-btn"),
   submitTextBtn: document.getElementById("submit-text-btn"),
@@ -81,7 +79,6 @@ const els = {
   fighterContraName: document.getElementById("fighter-contra-name"),
   bubblePro: document.getElementById("bubble-pro"),
   bubbleContra: document.getElementById("bubble-contra"),
-  bgMusic: document.getElementById("bg-music"),
   arenaImpact: document.getElementById("arena-impact"),
   arenaAnnouncer: document.getElementById("arena-announcer"),
   hitTrackPro: document.getElementById("hit-track-pro"),
@@ -437,30 +434,6 @@ function createNoiseBuffer(audioCtx) {
 
 function updateAudioButton() {
   els.audioToggleBtn.textContent = state.audioEnabled ? "Effekte aus" : "Effekte an";
-}
-
-function updateMusicButton() {
-  els.musicToggleBtn.textContent = state.musicEnabled ? "Musik aus" : "Musik an";
-}
-
-async function setMusicEnabled(enabled) {
-  state.musicEnabled = enabled;
-  els.bgMusic.volume = 0.02;
-
-  if (!enabled) {
-    els.bgMusic.pause();
-    updateMusicButton();
-    return;
-  }
-
-  try {
-    await els.bgMusic.play();
-  } catch (error) {
-    state.musicEnabled = false;
-    showNotice("Die Hintergrundmusik konnte in diesem Browser nicht gestartet werden.", "error");
-  }
-
-  updateMusicButton();
 }
 
 function clearTimerDisplay() {
@@ -1594,10 +1567,6 @@ els.textMoveInput.addEventListener("input", () => {
   updateTextControls();
 });
 
-els.musicToggleBtn.addEventListener("click", async () => {
-  await setMusicEnabled(!state.musicEnabled);
-});
-
 els.audioToggleBtn.addEventListener("click", () => {
   if (!state.audioEnabled) {
     if (!ensureAudio()) {
@@ -1628,7 +1597,5 @@ els.modePickButtons.forEach((button) => {
 });
 
 updateAudioButton();
-updateMusicButton();
-els.bgMusic.volume = 0.02;
 updateSetupOptions();
 connect();
