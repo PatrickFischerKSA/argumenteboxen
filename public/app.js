@@ -12,6 +12,7 @@ const state = {
   musicEnabled: false,
   audioCtx: null,
   masterGain: null,
+  noiseBuffer: null,
   bubbleTimers: {
     pro: null,
     contra: null
@@ -218,7 +219,18 @@ function ensureAudio() {
   state.masterGain = state.audioCtx.createGain();
   state.masterGain.gain.value = 0.08;
   state.masterGain.connect(state.audioCtx.destination);
+  state.noiseBuffer = createNoiseBuffer(state.audioCtx);
   return true;
+}
+
+function createNoiseBuffer(audioCtx) {
+  const length = Math.floor(audioCtx.sampleRate * 0.8);
+  const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let index = 0; index < length; index += 1) {
+    data[index] = Math.random() * 2 - 1;
+  }
+  return buffer;
 }
 
 function updateAudioButton() {
@@ -308,39 +320,126 @@ function pulseTone({ frequency, duration, type = "sine", gain = 0.24, slideTo })
   oscillator.stop(now + duration + 0.02);
 }
 
+function playNoiseBurst({
+  duration = 0.16,
+  gain = 0.18,
+  highpass = 120,
+  lowpass = 2400,
+  attack = 0.004,
+  release = duration
+} = {}) {
+  if (!state.audioEnabled || !ensureAudio() || !state.noiseBuffer) {
+    return;
+  }
+
+  const now = state.audioCtx.currentTime;
+  const source = state.audioCtx.createBufferSource();
+  source.buffer = state.noiseBuffer;
+
+  const high = state.audioCtx.createBiquadFilter();
+  high.type = "highpass";
+  high.frequency.setValueAtTime(highpass, now);
+
+  const low = state.audioCtx.createBiquadFilter();
+  low.type = "lowpass";
+  low.frequency.setValueAtTime(lowpass, now);
+
+  const envelope = state.audioCtx.createGain();
+  envelope.gain.setValueAtTime(0.0001, now);
+  envelope.gain.exponentialRampToValueAtTime(gain, now + attack);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, now + release);
+
+  source.connect(high);
+  high.connect(low);
+  low.connect(envelope);
+  envelope.connect(state.masterGain);
+
+  source.start(now);
+  source.stop(now + duration);
+}
+
+function playSwingSound() {
+  pulseTone({ frequency: 280, slideTo: 140, duration: 0.16, type: "sawtooth", gain: 0.08 });
+  playNoiseBurst({ duration: 0.12, gain: 0.04, highpass: 500, lowpass: 4200, release: 0.08 });
+}
+
+function playImpactSound() {
+  pulseTone({ frequency: 150, slideTo: 72, duration: 0.22, type: "square", gain: 0.19 });
+  pulseTone({ frequency: 88, slideTo: 52, duration: 0.28, type: "triangle", gain: 0.12 });
+  playNoiseBurst({ duration: 0.18, gain: 0.22, highpass: 140, lowpass: 1800, release: 0.14 });
+}
+
+function playPainSound() {
+  pulseTone({ frequency: 620, slideTo: 410, duration: 0.11, type: "sawtooth", gain: 0.06 });
+  window.setTimeout(() => {
+    pulseTone({ frequency: 560, slideTo: 320, duration: 0.14, type: "triangle", gain: 0.05 });
+  }, 40);
+}
+
+function playBlockSound() {
+  pulseTone({ frequency: 520, duration: 0.06, type: "square", gain: 0.08 });
+  window.setTimeout(() => {
+    pulseTone({ frequency: 820, duration: 0.08, type: "triangle", gain: 0.06 });
+  }, 35);
+  playNoiseBurst({ duration: 0.08, gain: 0.05, highpass: 1200, lowpass: 5200, release: 0.06 });
+}
+
+function playGongSound() {
+  pulseTone({ frequency: 196, duration: 1.4, type: "sine", gain: 0.1 });
+  pulseTone({ frequency: 293, duration: 1.2, type: "triangle", gain: 0.06 });
+  window.setTimeout(() => {
+    pulseTone({ frequency: 392, duration: 0.95, type: "triangle", gain: 0.05 });
+  }, 60);
+  playNoiseBurst({ duration: 0.42, gain: 0.08, highpass: 260, lowpass: 2600, release: 0.34 });
+}
+
+function playKoSound() {
+  playImpactSound();
+  window.setTimeout(() => {
+    pulseTone({ frequency: 120, slideTo: 42, duration: 0.65, type: "sawtooth", gain: 0.18 });
+    playNoiseBurst({ duration: 0.34, gain: 0.12, highpass: 90, lowpass: 900, release: 0.28 });
+  }, 55);
+  window.setTimeout(() => {
+    playPainSound();
+  }, 120);
+}
+
 function playCueSound(cue) {
   if (!cue || !state.audioEnabled) {
     return;
   }
 
   if (cue.type === "match-start") {
-    pulseTone({ frequency: 660, duration: 0.16, type: "triangle", gain: 0.18 });
-    window.setTimeout(() => {
-      pulseTone({ frequency: 880, duration: 0.28, type: "triangle", gain: 0.16 });
-    }, 120);
+    playGongSound();
     return;
   }
 
   if (cue.type === "attack") {
-    pulseTone({ frequency: 210, slideTo: 120, duration: 0.18, type: "sawtooth", gain: 0.14 });
+    playSwingSound();
     return;
   }
 
   if (cue.type === "counter") {
-    pulseTone({ frequency: 480, duration: 0.1, type: "square", gain: 0.12 });
-    window.setTimeout(() => {
-      pulseTone({ frequency: 620, duration: 0.16, type: "square", gain: 0.1 });
-    }, 60);
+    playBlockSound();
     return;
   }
 
   if (cue.type === "hit" || cue.type === "timeout-hit") {
-    pulseTone({ frequency: 170, slideTo: 80, duration: 0.24, type: "square", gain: 0.18 });
+    playImpactSound();
+    window.setTimeout(() => {
+      playPainSound();
+    }, 55);
+    return;
+  }
+
+  if (cue.type === "timeout-turnover") {
+    playNoiseBurst({ duration: 0.12, gain: 0.06, highpass: 1800, lowpass: 5200, release: 0.08 });
+    pulseTone({ frequency: 520, slideTo: 430, duration: 0.14, type: "triangle", gain: 0.05 });
     return;
   }
 
   if (cue.type === "ko") {
-    pulseTone({ frequency: 140, slideTo: 58, duration: 0.44, type: "sawtooth", gain: 0.22 });
+    playKoSound();
   }
 }
 
