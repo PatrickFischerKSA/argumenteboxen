@@ -233,7 +233,7 @@ function ensureAudio() {
   state.compressor.attack.setValueAtTime(0.003, state.audioCtx.currentTime);
   state.compressor.release.setValueAtTime(0.18, state.audioCtx.currentTime);
   state.masterGain = state.audioCtx.createGain();
-  state.masterGain.gain.value = 0.42;
+  state.masterGain.gain.value = 0.5;
   state.masterGain.connect(state.compressor);
   state.compressor.connect(state.audioCtx.destination);
   state.noiseBuffer = createNoiseBuffer(state.audioCtx);
@@ -312,18 +312,18 @@ function startCrowdAmbience() {
 
   state.crowdFilter = state.audioCtx.createBiquadFilter();
   state.crowdFilter.type = "bandpass";
-  state.crowdFilter.frequency.setValueAtTime(460, now);
-  state.crowdFilter.Q.setValueAtTime(0.45, now);
+  state.crowdFilter.frequency.setValueAtTime(540, now);
+  state.crowdFilter.Q.setValueAtTime(0.35, now);
 
   state.crowdGain = state.audioCtx.createGain();
-  state.crowdGain.gain.setValueAtTime(0.06, now);
+  state.crowdGain.gain.setValueAtTime(0.045, now);
 
   state.crowdLfo = state.audioCtx.createOscillator();
   state.crowdLfo.type = "sine";
   state.crowdLfo.frequency.setValueAtTime(0.22, now);
 
   state.crowdLfoGain = state.audioCtx.createGain();
-  state.crowdLfoGain.gain.setValueAtTime(0.03, now);
+  state.crowdLfoGain.gain.setValueAtTime(0.018, now);
 
   state.crowdHissSource = state.audioCtx.createBufferSource();
   state.crowdHissSource.buffer = state.noiseBuffer;
@@ -338,7 +338,7 @@ function startCrowdAmbience() {
   hissLowpass.frequency.setValueAtTime(5200, now);
 
   state.crowdHissGain = state.audioCtx.createGain();
-  state.crowdHissGain.gain.setValueAtTime(0.022, now);
+  state.crowdHissGain.gain.setValueAtTime(0.012, now);
 
   state.crowdLfo.connect(state.crowdLfoGain);
   state.crowdLfoGain.connect(state.crowdGain.gain);
@@ -390,7 +390,7 @@ function updateMusicButton() {
 
 async function setMusicEnabled(enabled) {
   state.musicEnabled = enabled;
-  els.bgMusic.volume = 0.1;
+  els.bgMusic.volume = 0.08;
 
   if (!enabled) {
     els.bgMusic.pause();
@@ -506,20 +506,21 @@ function playNoiseBurst({
 }
 
 function playSwingSound() {
-  pulseTone({ frequency: 360, slideTo: 120, duration: 0.2, type: "sawtooth", gain: 0.18 });
-  playNoiseBurst({ duration: 0.16, gain: 0.14, highpass: 340, lowpass: 5200, release: 0.12 });
+  pulseTone({ frequency: 410, slideTo: 135, duration: 0.18, type: "sawtooth", gain: 0.22 });
+  playNoiseBurst({ duration: 0.15, gain: 0.18, highpass: 300, lowpass: 5600, release: 0.11 });
 }
 
-function playImpactSound() {
-  pulseTone({ frequency: 170, slideTo: 62, duration: 0.28, type: "square", gain: 0.54 });
-  pulseTone({ frequency: 102, slideTo: 42, duration: 0.38, type: "triangle", gain: 0.34 });
-  playNoiseBurst({ duration: 0.28, gain: 0.52, highpass: 90, lowpass: 2600, release: 0.22 });
+function playImpactSound(strength = 1) {
+  pulseTone({ frequency: 182, slideTo: 64, duration: 0.24, type: "square", gain: 0.42 * strength });
+  pulseTone({ frequency: 114, slideTo: 46, duration: 0.34, type: "triangle", gain: 0.28 * strength });
+  pulseTone({ frequency: 520, slideTo: 180, duration: 0.12, type: "sawtooth", gain: 0.16 * strength });
+  playNoiseBurst({ duration: 0.24, gain: 0.34 * strength, highpass: 90, lowpass: 3000, release: 0.18 });
 }
 
-function playPainSound() {
-  pulseTone({ frequency: 840, slideTo: 420, duration: 0.16, type: "sawtooth", gain: 0.18 });
+function playPainSound(strength = 1) {
+  pulseTone({ frequency: 920, slideTo: 460, duration: 0.16, type: "sawtooth", gain: 0.16 * strength });
   window.setTimeout(() => {
-    pulseTone({ frequency: 700, slideTo: 280, duration: 0.22, type: "triangle", gain: 0.14 });
+    pulseTone({ frequency: 760, slideTo: 300, duration: 0.22, type: "triangle", gain: 0.12 * strength });
   }, 40);
 }
 
@@ -532,26 +533,35 @@ function playBlockSound() {
 }
 
 function playGongSound() {
-  pulseTone({ frequency: 780, duration: 0.16, type: "square", gain: 0.42 });
-  pulseTone({ frequency: 1560, duration: 0.14, type: "triangle", gain: 0.32 });
-  pulseTone({ frequency: 2460, duration: 0.11, type: "sawtooth", gain: 0.2 });
+  pulseTone({ frequency: 980, duration: 0.1, type: "square", gain: 0.4 });
+  pulseTone({ frequency: 1880, duration: 0.11, type: "sawtooth", gain: 0.34 });
+  pulseTone({ frequency: 3020, duration: 0.08, type: "square", gain: 0.24 });
+  playNoiseBurst({ duration: 0.12, gain: 0.34, highpass: 900, lowpass: 9000, release: 0.08 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 196, duration: 2.6, type: "sine", gain: 0.4 });
-    pulseTone({ frequency: 293, duration: 2.15, type: "triangle", gain: 0.3 });
-    pulseTone({ frequency: 410, duration: 1.7, type: "triangle", gain: 0.22 });
-    pulseTone({ frequency: 1320, duration: 0.95, type: "square", gain: 0.24 });
-    playNoiseBurst({ duration: 0.8, gain: 0.42, highpass: 200, lowpass: 6800, release: 0.68 });
-  }, 24);
+    pulseTone({ frequency: 910, duration: 0.1, type: "square", gain: 0.34 });
+    pulseTone({ frequency: 1730, duration: 0.11, type: "sawtooth", gain: 0.28 });
+    pulseTone({ frequency: 2740, duration: 0.08, type: "square", gain: 0.2 });
+    playNoiseBurst({ duration: 0.11, gain: 0.28, highpass: 840, lowpass: 8800, release: 0.08 });
+  }, 60);
+  window.setTimeout(() => {
+    pulseTone({ frequency: 320, duration: 2.2, type: "sine", gain: 0.28 });
+    pulseTone({ frequency: 438, duration: 1.9, type: "triangle", gain: 0.24 });
+    pulseTone({ frequency: 612, duration: 1.35, type: "triangle", gain: 0.18 });
+    pulseTone({ frequency: 1480, duration: 0.8, type: "square", gain: 0.18 });
+    pulseTone({ frequency: 2260, duration: 0.42, type: "square", gain: 0.1 });
+    playNoiseBurst({ duration: 0.78, gain: 0.32, highpass: 340, lowpass: 7600, release: 0.62 });
+  }, 18);
 }
 
 function playKoSound() {
-  playImpactSound();
+  playImpactSound(1.8);
   window.setTimeout(() => {
-    pulseTone({ frequency: 120, slideTo: 32, duration: 0.94, type: "sawtooth", gain: 0.56 });
-    playNoiseBurst({ duration: 0.54, gain: 0.38, highpass: 60, lowpass: 1200, release: 0.42 });
+    pulseTone({ frequency: 120, slideTo: 30, duration: 1.02, type: "sawtooth", gain: 0.64 });
+    pulseTone({ frequency: 68, slideTo: 34, duration: 1.14, type: "triangle", gain: 0.28 });
+    playNoiseBurst({ duration: 0.58, gain: 0.44, highpass: 50, lowpass: 1400, release: 0.46 });
   }, 55);
   window.setTimeout(() => {
-    playPainSound();
+    playPainSound(1.45);
   }, 120);
 }
 
@@ -564,6 +574,13 @@ function playCrowdRoar({ gain = 0.3, duration = 0.9, highpass = 180, lowpass = 3
     attack: 0.01,
     release: duration * 0.8
   });
+}
+
+function playCrowdYell({ frequency = 720, slideTo = 1080, duration = 0.32, gain = 0.16, delay = 0 } = {}) {
+  window.setTimeout(() => {
+    pulseTone({ frequency, slideTo, duration, type: "sawtooth", gain });
+    pulseTone({ frequency: frequency * 1.9, slideTo: slideTo * 1.18, duration: duration * 0.78, type: "triangle", gain: gain * 0.52 });
+  }, delay);
 }
 
 function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
@@ -583,18 +600,24 @@ function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
 }
 
 function playCrowdWhistle() {
-  pulseTone({ frequency: 1960, slideTo: 1380, duration: 0.26, type: "triangle", gain: 0.14 });
+  pulseTone({ frequency: 2280, slideTo: 1740, duration: 0.22, type: "triangle", gain: 0.22 });
+  pulseTone({ frequency: 3160, slideTo: 2620, duration: 0.14, type: "square", gain: 0.08 });
   window.setTimeout(() => {
-    pulseTone({ frequency: 1740, slideTo: 2240, duration: 0.22, type: "triangle", gain: 0.12 });
-  }, 70);
+    pulseTone({ frequency: 2460, slideTo: 1860, duration: 0.2, type: "triangle", gain: 0.18 });
+  }, 85);
+  window.setTimeout(() => {
+    pulseTone({ frequency: 2140, slideTo: 2680, duration: 0.18, type: "triangle", gain: 0.14 });
+  }, 180);
 }
 
 function playCrowdCheer() {
-  playCrowdRoar({ gain: 0.34, duration: 0.95, highpass: 240, lowpass: 4600 });
-  playCrowdClaps(7, 95, 0.22);
+  playCrowdRoar({ gain: 0.26, duration: 0.72, highpass: 240, lowpass: 4200 });
+  playCrowdClaps(8, 88, 0.19);
+  playCrowdYell({ frequency: 680, slideTo: 1040, duration: 0.28, gain: 0.17, delay: 35 });
+  playCrowdYell({ frequency: 760, slideTo: 1280, duration: 0.24, gain: 0.13, delay: 120 });
   window.setTimeout(() => {
     playCrowdWhistle();
-  }, 120);
+  }, 150);
 }
 
 function playCueSound(cue) {
@@ -605,12 +628,14 @@ function playCueSound(cue) {
   if (cue.type === "match-start") {
     playGongSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.38, duration: 1.3, highpass: 220, lowpass: 4000 });
-      playCrowdClaps(10, 90, 0.24);
-    }, 110);
+      playCrowdRoar({ gain: 0.28, duration: 1.1, highpass: 220, lowpass: 3800 });
+      playCrowdClaps(10, 84, 0.2);
+      playCrowdYell({ frequency: 620, slideTo: 980, duration: 0.36, gain: 0.18 });
+      playCrowdYell({ frequency: 780, slideTo: 1240, duration: 0.28, gain: 0.14, delay: 110 });
+    }, 90);
     window.setTimeout(() => {
       playCrowdWhistle();
-    }, 260);
+    }, 220);
     return;
   }
 
@@ -624,15 +649,29 @@ function playCueSound(cue) {
     return;
   }
 
-  if (cue.type === "hit" || cue.type === "timeout-hit") {
-    playImpactSound();
+  if (cue.type === "hit") {
+    playImpactSound(1.15);
     window.setTimeout(() => {
-      playPainSound();
-    }, 55);
+      playPainSound(1.05);
+    }, 50);
     window.setTimeout(() => {
       playCrowdCheer();
-      playCrowdClaps(6, 85, 0.18);
-    }, 90);
+    }, 80);
+    return;
+  }
+
+  if (cue.type === "timeout-hit") {
+    playImpactSound(1.55);
+    window.setTimeout(() => {
+      playPainSound(1.35);
+    }, 50);
+    window.setTimeout(() => {
+      playCrowdRoar({ gain: 0.34, duration: 0.95, highpass: 220, lowpass: 4200 });
+      playCrowdClaps(10, 76, 0.24);
+      playCrowdYell({ frequency: 660, slideTo: 1120, duration: 0.34, gain: 0.2 });
+      playCrowdYell({ frequency: 820, slideTo: 1380, duration: 0.26, gain: 0.16, delay: 95 });
+      playCrowdWhistle();
+    }, 85);
     return;
   }
 
@@ -645,10 +684,16 @@ function playCueSound(cue) {
   if (cue.type === "ko") {
     playKoSound();
     window.setTimeout(() => {
-      playCrowdRoar({ gain: 0.48, duration: 2.2, highpass: 140, lowpass: 3600 });
-      playCrowdClaps(14, 80, 0.28);
+      playCrowdRoar({ gain: 0.42, duration: 2.4, highpass: 140, lowpass: 3600 });
+      playCrowdClaps(18, 68, 0.26);
+      playCrowdYell({ frequency: 640, slideTo: 1180, duration: 0.44, gain: 0.22 });
+      playCrowdYell({ frequency: 760, slideTo: 1360, duration: 0.34, gain: 0.18, delay: 110 });
+      playCrowdYell({ frequency: 820, slideTo: 1520, duration: 0.28, gain: 0.16, delay: 240 });
       playCrowdWhistle();
-    }, 120);
+      window.setTimeout(() => {
+        playCrowdWhistle();
+      }, 220);
+    }, 110);
   }
 }
 
@@ -1485,6 +1530,6 @@ els.modePickButtons.forEach((button) => {
 
 updateAudioButton();
 updateMusicButton();
-els.bgMusic.volume = 0.22;
+els.bgMusic.volume = 0.08;
 updateSetupOptions();
 connect();
