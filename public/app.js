@@ -15,6 +15,7 @@ const state = {
   masterGain: null,
   compressor: null,
   noiseBuffer: null,
+  effectSamples: {},
   crowdSource: null,
   crowdFilter: null,
   crowdGain: null,
@@ -87,6 +88,16 @@ const els = {
   hitTrackContra: document.getElementById("hit-track-contra"),
   infoTabs: Array.from(document.querySelectorAll("[data-info-tab]")),
   infoPanels: Array.from(document.querySelectorAll("[data-info-panel]"))
+};
+
+const SOUND_FILES = {
+  gong: "/assets/audio/sfx/gong.wav",
+  hit: "/assets/audio/sfx/hit.wav",
+  ko: "/assets/audio/sfx/ko.wav",
+  crowdCall: "/assets/audio/sfx/crowd-call.wav",
+  crowdCall2: "/assets/audio/sfx/crowd-call-2.wav",
+  clap: "/assets/audio/sfx/clap.wav",
+  whistle: "/assets/audio/sfx/whistle.wav"
 };
 
 function currentConfiguredTurnMs() {
@@ -245,12 +256,56 @@ function primeArenaAudio() {
     return false;
   }
 
+  primeEffectSamples();
+
   if (!state.audioEnabled && !state.audioManuallyDisabled) {
     state.audioEnabled = true;
     updateAudioButton();
   }
 
   return true;
+}
+
+function primeEffectSamples() {
+  Object.entries(SOUND_FILES).forEach(([name, src]) => {
+    if (state.effectSamples[name]) {
+      return;
+    }
+
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.load();
+    state.effectSamples[name] = audio;
+  });
+}
+
+function playSample(
+  name,
+  { volume = 1, delay = 0, layers = 1, staggerMs = 40, rate = 1, rateStep = 0.04 } = {}
+) {
+  if (!state.audioEnabled) {
+    return;
+  }
+
+  const base = state.effectSamples[name];
+  if (!base) {
+    primeEffectSamples();
+  }
+
+  const sample = state.effectSamples[name];
+  if (!sample) {
+    return;
+  }
+
+  for (let index = 0; index < layers; index += 1) {
+    window.setTimeout(() => {
+      const clone = sample.cloneNode();
+      clone.volume = Math.min(1, volume);
+      clone.playbackRate = Math.max(0.7, rate + index * rateStep);
+      clone.currentTime = 0;
+      clone.play().catch(() => {});
+    }, delay + index * staggerMs);
+  }
 }
 
 function stopCrowdAmbience() {
@@ -517,6 +572,13 @@ function playHitCrack(strength = 1) {
 }
 
 function playImpactSound(strength = 1) {
+  playSample("hit", {
+    volume: Math.min(1, 0.68 + strength * 0.18),
+    layers: strength >= 2 ? 4 : 2,
+    staggerMs: strength >= 2 ? 18 : 24,
+    rate: strength >= 2 ? 0.92 : 0.98,
+    rateStep: 0.03
+  });
   pulseTone({ frequency: 188, slideTo: 58, duration: 0.26, type: "square", gain: 0.54 * strength });
   pulseTone({ frequency: 118, slideTo: 42, duration: 0.38, type: "triangle", gain: 0.36 * strength });
   pulseTone({ frequency: 560, slideTo: 170, duration: 0.14, type: "sawtooth", gain: 0.2 * strength });
@@ -551,6 +613,7 @@ function playBellStrike({ delay = 0, base = 1040, gain = 0.34 } = {}) {
 }
 
 function playGongSound() {
+  playSample("gong", { volume: 1, layers: 3, staggerMs: 54, rate: 0.96, rateStep: -0.03 });
   playBellStrike({ delay: 0, base: 1180, gain: 0.56 });
   playBellStrike({ delay: 58, base: 1100, gain: 0.46 });
   playBellStrike({ delay: 126, base: 1020, gain: 0.36 });
@@ -563,6 +626,7 @@ function playGongSound() {
 }
 
 function playKoSound() {
+  playSample("ko", { volume: 1, layers: 3, staggerMs: 28, rate: 0.94, rateStep: -0.04 });
   playImpactSound(3.2);
   window.setTimeout(() => {
     pulseTone({ frequency: 120, slideTo: 30, duration: 1.06, type: "sawtooth", gain: 0.88 });
@@ -612,6 +676,7 @@ function playCrowdChant({ delay = 0, gain = 0.14 } = {}) {
 function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
   for (let index = 0; index < count; index += 1) {
     window.setTimeout(() => {
+      playSample("clap", { volume: Math.min(1, gain * 2.8), rate: 1 + index * 0.01 });
       playNoiseBurst({
         duration: 0.045,
         gain,
@@ -626,6 +691,7 @@ function playCrowdClaps(count = 6, spacing = 120, gain = 0.22) {
 }
 
 function playCrowdWhistle() {
+  playSample("whistle", { volume: 1, layers: 2, staggerMs: 120, rate: 0.98, rateStep: 0.06 });
   pulseTone({ frequency: 1820, slideTo: 1440, duration: 0.26, type: "triangle", gain: 0.38 });
   pulseTone({ frequency: 2460, slideTo: 1980, duration: 0.18, type: "square", gain: 0.18 });
   window.setTimeout(() => {
@@ -637,6 +703,8 @@ function playCrowdWhistle() {
 }
 
 function playCrowdCheer() {
+  playSample("crowdCall", { volume: 1, delay: 18, rate: 1.04 });
+  playSample("crowdCall2", { volume: 0.96, delay: 110, rate: 1.08 });
   playCrowdRoar({ gain: 0.07, duration: 0.52, highpass: 260, lowpass: 3400 });
   playCrowdClaps(10, 78, 0.24);
   playCrowdYell({ frequency: 660, slideTo: 1040, duration: 0.3, gain: 0.32, delay: 12 });
