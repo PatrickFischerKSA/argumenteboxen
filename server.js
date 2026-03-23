@@ -696,6 +696,12 @@ function resolveTurnTimeout(room, timerId) {
           note: "Die Verteidigung scheitert bereits an der verpassten Frist."
         }
       ],
+      impact: {
+        outcome: "full-hit",
+        label: "Volltreffer",
+        summary: "Ein Volltreffer zählt hier sofort, weil die Abwehrfrist verpasst wurde und damit keine prüfbare Widerlegung zustande kam.",
+        triggers: ["Direkter Bezug", "Passende Schlussart", "Konklusion folgt", "Fehlschluss oder Fristbruch"]
+      },
       explanation: `Die ${seconds} Sekunden für die Abwehr sind abgelaufen. "${getPendingAttackLabel(room.pendingAttack)}" trifft deshalb ohne rechtzeitige Widerlegung.`,
       attackProfile: getCardLogicProfile(attackCard.id).label,
       defenseProfile: "keine Abwehr"

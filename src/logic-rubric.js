@@ -26,6 +26,28 @@ const LOGIC_REFERENCE = {
       description: "Die Abwehr darf nicht in einen formalen oder informellen Trugschluss kippen."
     }
   ],
+  fullHitRule: [
+    {
+      id: "relevance",
+      label: "Kern nicht getroffen",
+      description: "Das Gegenargument greift These, Prämisse oder Konklusion des Angriffs nicht direkt an."
+    },
+    {
+      id: "form",
+      label: "Widerlegungsform trägt nicht",
+      description: "Die Abwehr arbeitet nicht mit einer passenden logischen Gegenbewegung."
+    },
+    {
+      id: "inference",
+      label: "Widerlegung folgt nicht",
+      description: "Aus der Abwehr ergibt sich keine tragfähige Entkräftung des Angriffs."
+    },
+    {
+      id: "fallacy",
+      label: "Fehlschluss oder Fristbruch",
+      description: "Ein Fehlschluss oder eine verpasste Frist macht die Abwehr zum Volltreffer für die Gegenseite."
+    }
+  ],
   validForms: [
     {
       id: "deduktion",
@@ -299,49 +321,81 @@ function getCardLogicProfile(cardId) {
   );
 }
 
+function buildImpact(verdict, criteria) {
+  if (verdict === "valid") {
+    return {
+      outcome: "parade",
+      label: "Kein Volltreffer",
+      summary: "Die Abwehr zählt als Parade, weil alle Kernkriterien der Widerlegung tragen.",
+      triggers: [
+        "Direkter Bezug auf den Angriff",
+        "Passende Widerlegungsform",
+        "Tragfähige Schlussfolgerung",
+        "Kein Fehlschluss"
+      ]
+    };
+  }
+
+  const failedCore = criteria.filter(
+    (criterion) =>
+      ["relevance", "form", "inference", "fallacy"].includes(criterion.id) && !criterion.passed
+  );
+
+  return {
+    outcome: "full-hit",
+    label: "Volltreffer",
+    summary:
+      "Ein Volltreffer zählt, sobald die Abwehr den Kern des Angriffs verfehlt, logisch nicht trägt, in einen Fehlschluss kippt oder fristlich scheitert.",
+    triggers: failedCore.map((criterion) => criterion.label)
+  };
+}
+
 function evaluateDefense(attackCard, defenseCard, isValid) {
   const attackProfile = getCardLogicProfile(attackCard.id);
   const defenseProfile = getCardLogicProfile(defenseCard.id);
 
   if (isValid) {
+    const criteria = [
+      {
+        id: "claim",
+        label: "These und Prämissen klar",
+        passed: true,
+        note: `"${attackCard.title}" formuliert eine erkennbare These mit Begründung.`
+      },
+      {
+        id: "relevance",
+        label: "Direkter Bezug",
+        passed: true,
+        note: `"${defenseCard.title}" trifft den Kern von "${attackCard.title}".`
+      },
+      {
+        id: "form",
+        label: "Passende Schlussart",
+        passed: true,
+        note: `${defenseProfile.label}: ${defenseProfile.counterUse}.`
+      },
+      {
+        id: "inference",
+        label: "Konklusion folgt",
+        passed: true,
+        note: `Die Widerlegung ist ${defenseProfile.validity} gültig und nicht bloss lose assoziiert.`
+      },
+      {
+        id: "fallacy",
+        label: "Kein Fehlschluss",
+        passed: true,
+        note: "Kein offensichtlicher Trugschluss nach dem Dossier."
+      }
+    ];
+
     return {
       verdict: "valid",
       summary: `"${defenseCard.title}" ist als Gegenargument logisch tragfähig.`,
       reasoningLabel: defenseProfile.label,
       validityLevel: defenseProfile.validity,
       fallacy: null,
-      criteria: [
-        {
-          id: "claim",
-          label: "These und Prämissen klar",
-          passed: true,
-          note: `"${attackCard.title}" formuliert eine erkennbare These mit Begründung.`
-        },
-        {
-          id: "relevance",
-          label: "Direkter Bezug",
-          passed: true,
-          note: `"${defenseCard.title}" trifft den Kern von "${attackCard.title}".`
-        },
-        {
-          id: "form",
-          label: "Passende Schlussart",
-          passed: true,
-          note: `${defenseProfile.label}: ${defenseProfile.counterUse}.`
-        },
-        {
-          id: "inference",
-          label: "Konklusion folgt",
-          passed: true,
-          note: `Die Widerlegung ist ${defenseProfile.validity} gültig und nicht bloss lose assoziiert.`
-        },
-        {
-          id: "fallacy",
-          label: "Kein Fehlschluss",
-          passed: true,
-          note: "Kein offensichtlicher Trugschluss nach dem Dossier."
-        }
-      ],
+      criteria,
+      impact: buildImpact("valid", criteria),
       explanation: `${defenseProfile.kernel} Darum kann die Abwehr die Angriffslogik entkräften.`,
       attackProfile: attackProfile.label,
       defenseProfile: defenseProfile.label
@@ -350,6 +404,39 @@ function evaluateDefense(attackCard, defenseCard, isValid) {
 
   const fallacyId = defenseProfile.misfireAs || "non_sequitur";
   const fallacyLabel = FALLACY_LABELS[fallacyId] || "non sequitur";
+
+  const criteria = [
+    {
+      id: "claim",
+      label: "These und Prämissen klar",
+      passed: true,
+      note: `"${attackCard.title}" hat eine erkennbare argumentative Struktur.`
+    },
+    {
+      id: "relevance",
+      label: "Direkter Bezug",
+      passed: false,
+      note: `"${defenseCard.title}" greift die tragende Prämisse oder Konklusion nicht direkt genug an.`
+    },
+    {
+      id: "form",
+      label: "Passende Schlussart",
+      passed: false,
+      note: `Die Karte aktiviert hier keine passende ${defenseProfile.label.toLowerCase()}e Widerlegung.`
+    },
+    {
+      id: "inference",
+      label: "Konklusion folgt",
+      passed: false,
+      note: "Aus der Abwehr folgt keine ausreichende Widerlegung des Angriffs."
+    },
+    {
+      id: "fallacy",
+      label: "Kein Fehlschluss",
+      passed: false,
+      note: `Die Abwehr kippt hier in Richtung ${fallacyLabel}.`
+    }
+  ];
 
   return {
     verdict: "invalid",
@@ -360,38 +447,8 @@ function evaluateDefense(attackCard, defenseCard, isValid) {
       id: fallacyId,
       label: fallacyLabel
     },
-    criteria: [
-      {
-        id: "claim",
-        label: "These und Prämissen klar",
-        passed: true,
-        note: `"${attackCard.title}" hat eine erkennbare argumentative Struktur.`
-      },
-      {
-        id: "relevance",
-        label: "Direkter Bezug",
-        passed: false,
-        note: `"${defenseCard.title}" greift die tragende Prämisse oder Konklusion nicht direkt genug an.`
-      },
-      {
-        id: "form",
-        label: "Passende Schlussart",
-        passed: false,
-        note: `Die Karte aktiviert hier keine passende ${defenseProfile.label.toLowerCase()}e Widerlegung.`
-      },
-      {
-        id: "inference",
-        label: "Konklusion folgt",
-        passed: false,
-        note: "Aus der Abwehr folgt keine ausreichende Widerlegung des Angriffs."
-      },
-      {
-        id: "fallacy",
-        label: "Kein Fehlschluss",
-        passed: false,
-        note: `Die Abwehr kippt hier in Richtung ${fallacyLabel}.`
-      }
-    ],
+    criteria,
+    impact: buildImpact("invalid", criteria),
     explanation: `${defenseProfile.kernel} In diesem Kontext trifft das Gegenargument den Schluss aber nicht präzise genug.`,
     attackProfile: attackProfile.label,
     defenseProfile: defenseProfile.label

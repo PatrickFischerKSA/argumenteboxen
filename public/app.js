@@ -1286,6 +1286,16 @@ function renderLogicPanel() {
       <article class="logic-card ${judgement.verdict}">
         <strong>${escapeHtml(judgement.summary)}</strong>
         <p>${escapeHtml(judgement.explanation)}</p>
+        ${
+          judgement.impact
+            ? `<p><strong>${escapeHtml(judgement.impact.label)}:</strong> ${escapeHtml(judgement.impact.summary)}</p>
+               ${
+                 judgement.impact.triggers?.length
+                   ? `<p><strong>Auslöser:</strong> ${escapeHtml(judgement.impact.triggers.join(" · "))}</p>`
+                   : ""
+               }`
+            : ""
+        }
         <p><strong>Schlussart:</strong> ${escapeHtml(judgement.defenseProfile)} · <strong>Geltung:</strong> ${escapeHtml(judgement.validityLevel)}</p>
         ${judgement.fallacy ? `<p><strong>Fehlschluss-Risiko:</strong> ${escapeHtml(judgement.fallacy.label)}</p>` : ""}
       </article>
@@ -1309,6 +1319,14 @@ function renderLogicPanel() {
   }
 
   els.logicReference.innerHTML = `
+    <div class="logic-reference-block">
+      <strong>Volltreffer-Regel</strong>
+      <ul class="logic-mini-list">
+        ${reference.fullHitRule
+          .map((item) => `<li><span>${escapeHtml(item.label)}</span> ${escapeHtml(item.description)}</li>`)
+          .join("")}
+      </ul>
+    </div>
     <div class="logic-reference-block">
       <strong>Kriterien</strong>
       <ul class="logic-mini-list">
