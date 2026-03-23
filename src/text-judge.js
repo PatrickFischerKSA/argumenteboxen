@@ -1,6 +1,24 @@
 const { CARD_LIBRARY, SIDE_DECKS } = require("./cards");
 const { evaluateDefense } = require("./logic-rubric");
 
+const REASON_MARKERS = [
+  "weil",
+  "denn",
+  "deshalb",
+  "deswegen",
+  "darum",
+  "daher",
+  "folglich",
+  "somit",
+  "dadurch",
+  "insofern",
+  "damit",
+  "wenn",
+  "dann"
+];
+
+const CONTRAST_MARKERS = ["aber", "jedoch", "hingegen", "während", "obwohl", "trotzdem"];
+
 const STOPWORDS = new Set([
   "aber",
   "als",
@@ -116,6 +134,12 @@ function tokenize(text) {
     .filter((token) => token.length > 2 && !STOPWORDS.has(token));
 }
 
+function rawWordCount(text) {
+  return sanitizeTextMove(text)
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 function unique(values) {
   return [...new Set(values)];
 }
@@ -221,6 +245,42 @@ function detectFallacyHint(text) {
   return null;
 }
 
+function assessArgumentStructure(text) {
+  const clean = sanitizeTextMove(text);
+  const normalised = normalise(clean);
+  const words = clean.split(/\s+/).filter(Boolean);
+  const contentWords = tokenize(clean);
+  const clauses = clean
+    .split(/[.!?;:]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const hasReasonMarker = REASON_MARKERS.some((marker) =>
+    normalised.includes(` ${marker} `) || normalised.startsWith(`${marker} `)
+  );
+  const hasContrastMarker = CONTRAST_MARKERS.some((marker) =>
+    normalised.includes(` ${marker} `) || normalised.startsWith(`${marker} `)
+  );
+  const hasCommaBridge = /,\s*(weil|denn|deshalb|daher|jedoch|aber|obwohl|damit)\b/i.test(clean);
+  const totalWords = words.length;
+  const totalContentWords = contentWords.length;
+  const tooShort = totalWords <= 3 || totalContentWords <= 2;
+  const hasSubstance = totalWords >= 6 && totalContentWords >= 4;
+  const hasJustification = hasReasonMarker || hasContrastMarker || hasCommaBridge || clauses.length >= 2;
+  const quality = tooShort ? "zu_kurz" : hasSubstance && hasJustification ? "tragfähig" : "knapp";
+
+  return {
+    totalWords,
+    totalContentWords,
+    clauses: clauses.length,
+    hasReasonMarker,
+    hasContrastMarker,
+    hasJustification,
+    hasSubstance,
+    tooShort,
+    quality
+  };
+}
+
 function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide }) {
   const cleanAttack = sanitizeTextMove(attackText);
   const cleanDefense = sanitizeTextMove(defenseText);
@@ -229,20 +289,31 @@ function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide 
   const attackCard = attackMatch.card;
   const defenseCard = defenseMatch.card;
   const fallacyHint = detectFallacyHint(cleanDefense);
+  const attackStructure = assessArgumentStructure(cleanAttack);
+  const defenseStructure = assessArgumentStructure(cleanDefense);
   const attackWords = attackMatch.tokens;
   const defenseWords = defenseMatch.tokens;
   const sharedWords = attackWords.filter((word) => defenseWords.includes(word));
   const validCounter = attackCard.validCounters.includes(defenseCard.id);
-  const enoughAttack = attackWords.length >= 4;
-  const enoughDefense = defenseWords.length >= 5;
+  const enoughAttack = attackWords.length >= 4 && !attackStructure.tooShort;
+  const enoughDefense = defenseWords.length >= 5 && defenseStructure.hasSubstance;
   const enoughSignal = defenseMatch.score >= 3 || defenseMatch.confidence !== "schwach";
   const directRelevance = validCounter || sharedWords.length > 0 || attackMatch.matches.some((word) => defenseMatch.matches.includes(word));
-  const isValid = validCounter && enoughDefense && enoughSignal && directRelevance && !fallacyHint;
+  const hasDiscursiveStrength = defenseStructure.hasJustification && defenseStructure.hasSubstance;
+  const isValid =
+    validCounter &&
+    enoughDefense &&
+    enoughSignal &&
+    directRelevance &&
+    hasDiscursiveStrength &&
+    !fallacyHint;
   const base = evaluateDefense(attackCard, defenseCard, isValid);
 
   base.summary = isValid
     ? `"${cleanDefense}" wird als tragfähige Abwehr gelesen.`
-    : `"${cleanDefense}" wehrt "${cleanAttack}" logisch nicht stark genug ab.`;
+    : defenseStructure.tooShort
+      ? `"${cleanDefense}" ist als Abwehr zu kurz und begründet den Gegenpunkt nicht ausreichend.`
+      : `"${cleanDefense}" wehrt "${cleanAttack}" logisch nicht stark genug ab.`;
 
   base.criteria = [
     {
@@ -250,8 +321,8 @@ function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide 
       label: "These und Prämissen klar",
       passed: enoughAttack,
       note: enoughAttack
-        ? `Der Angriff lässt sich dem Kartenkern "${attackCard.title}" zuordnen.`
-        : "Der Angriff bleibt sprachlich etwas knapp und schwerer einzuordnen."
+        ? `Der Angriff lässt sich dem Kartenkern "${attackCard.title}" zuordnen und hat genügend argumentative Substanz.`
+        : "Der Angriff bleibt sprachlich knapp oder zu wenig ausformuliert."
     },
     {
       id: "relevance",
@@ -264,16 +335,23 @@ function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide 
     {
       id: "form",
       label: "Passende Schlussart",
-      passed: enoughSignal,
-      note: `Der Text wurde als "${defenseCard.title}" mit ${base.defenseProfile} gelesen.`
+      passed: enoughSignal && defenseStructure.hasSubstance,
+      note:
+        enoughSignal && defenseStructure.hasSubstance
+          ? `Der Text wurde als "${defenseCard.title}" mit ${base.defenseProfile} gelesen.`
+          : "Der Text bleibt zu kurz oder zu unscharf, um eine tragfähige Schlussform sauber zu entfalten."
     },
     {
       id: "inference",
       label: "Konklusion folgt",
       passed: isValid,
       note: isValid
-        ? `Die eingegebene Abwehr passt zum gültigen Gegenmuster gegen "${attackCard.title}".`
-        : `Die eingegebene Abwehr trifft das Gegenmuster zu "${attackCard.title}" noch nicht präzise genug.`
+        ? `Die eingegebene Abwehr passt zum gültigen Gegenmuster gegen "${attackCard.title}" und begründet den Einwand sichtbar.`
+        : defenseStructure.tooShort
+          ? "Ein Dreiwortsatz oder eine knappe Behauptung ohne Begründung reicht hier nicht als Widerlegung."
+          : !defenseStructure.hasJustification
+            ? "Der Gegenpunkt behauptet etwas, begründet aber nicht, warum der Angriff dadurch entkräftet wird."
+            : `Die eingegebene Abwehr trifft das Gegenmuster zu "${attackCard.title}" noch nicht präzise genug.`
     },
     {
       id: "fallacy",
@@ -283,7 +361,7 @@ function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide 
     }
   ];
 
-  base.explanation = `Der Angriff wurde als "${attackCard.title}" erkannt, die Abwehr am ehesten als "${defenseCard.title}". ${isValid ? "Die Zuordnung passt zu einem gültigen Gegenargument." : "Die Zuordnung reicht für eine tragfähige Widerlegung noch nicht aus."}`;
+  base.explanation = `Der Angriff wurde als "${attackCard.title}" erkannt, die Abwehr am ehesten als "${defenseCard.title}". ${isValid ? "Die Zuordnung passt zu einem gültigen Gegenargument." : defenseStructure.tooShort ? "Die Formulierung ist diskursiv zu knapp und bleibt ohne ausreichende Begründung." : !defenseStructure.hasJustification ? "Der Gegenpunkt benennt ein Thema, begründet die Widerlegung aber noch nicht sichtbar." : "Die Zuordnung reicht für eine tragfähige Widerlegung noch nicht aus."}`;
 
   if (!isValid && fallacyHint) {
     base.fallacy = {
@@ -301,6 +379,13 @@ function evaluateTextDefense({ attackText, defenseText, attackSide, defenseSide 
     cardId: defenseCard.id,
     title: defenseCard.title,
     confidence: defenseMatch.confidence
+  };
+  base.discourse = {
+    attackWords: attackStructure.totalWords,
+    defenseWords: defenseStructure.totalWords,
+    defenseClauses: defenseStructure.clauses,
+    defenseHasJustification: defenseStructure.hasJustification,
+    defenseQuality: defenseStructure.quality
   };
 
   return {
@@ -320,6 +405,7 @@ function buildBotText(card, role = "attack") {
 }
 
 module.exports = {
+  assessArgumentStructure,
   sanitizeTextMove,
   inferCardFromText,
   evaluateTextDefense,

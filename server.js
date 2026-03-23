@@ -10,6 +10,7 @@ const {
   evaluateDefense
 } = require("./src/logic-rubric");
 const {
+  assessArgumentStructure,
   sanitizeTextMove,
   inferCardFromText,
   evaluateTextDefense,
@@ -950,8 +951,12 @@ function performTextMove(room, playerId, rawText) {
 
   const player = room.players.get(playerId);
   const text = sanitizeTextMove(rawText);
-  if (!player || text.length < 18) {
-    return { error: "Bitte gib ein etwas ausgearbeitetes Argument mit mindestens 18 Zeichen ein." };
+  const structure = assessArgumentStructure(text);
+  if (!player || text.length < 24 || structure.tooShort || structure.totalWords < 5) {
+    return {
+      error:
+        "Bitte gib ein ausformuliertes Argument ein. Sehr kurze Dreiwortsätze ohne Begründung zählen im Freitext-Level nicht."
+    };
   }
 
   if (room.phase === "attack") {
